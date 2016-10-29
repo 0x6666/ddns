@@ -7,7 +7,8 @@ import (
 	"regexp"
 	"strings"
 	"sync"
-	"time"
+
+	"github.com/fsnotify/fsnotify"
 
 	"github.com/hoisie/redis"
 	"github.com/inimei/backup/log"
@@ -15,9 +16,10 @@ import (
 )
 
 type Hosts struct {
-	fileHosts       *FileHosts
-	redisHosts      *RedisHosts
-	refreshInterval time.Duration
+	fileHosts  *FileHosts
+	redisHosts *RedisHosts
+
+	hostWatcher *fsnotify.Watcher
 }
 
 func NewHosts(hs config.HostsSettings, rs config.RedisSettings) Hosts {
@@ -36,10 +38,9 @@ func NewHosts(hs config.HostsSettings, rs config.RedisSettings) Hosts {
 		}
 	}
 
-	hosts := Hosts{fileHosts, redisHosts, time.Second * time.Duration(hs.RefreshInterval)}
+	hosts := Hosts{fileHosts, redisHosts, nil}
 	hosts.refresh()
 	return hosts
-
 }
 
 /*
@@ -83,16 +84,53 @@ func (h *Hosts) Get(domain string, family int) ([]net.IP, bool) {
 Update hosts records from /etc/hosts file and redis per minute
 */
 func (h *Hosts) refresh() {
-	ticker := time.NewTicker(h.refreshInterval)
+	if h.hostWatcher != nil {
+		return
+	}
+
+	var err error
+	h.hostWatcher, err = fsnotify.NewWatcher()
+	if err != nil {
+		log.Error(err.Error())
+	}
+
+	//done := make(chan bool)
 	go func() {
 		for {
-			h.fileHosts.Refresh()
-			if h.redisHosts != nil {
-				h.redisHosts.Refresh()
+			select {
+			case event := <-h.hostWatcher.Events:
+				log.Info("event: %v", event)
+				if event.Op&fsnotify.Write == fsnotify.Write {
+					log.Info("modified file:", event.Name)
+					h.fileHosts.Refresh()
+					if h.redisHosts != nil {
+						h.redisHosts.Refresh()
+					}
+				}
+			case err := <-h.hostWatcher.Errors:
+				log.Info("error:", err)
 			}
-			<-ticker.C
 		}
 	}()
+
+	err = h.hostWatcher.Add(h.fileHosts.file)
+	if err != nil {
+		log.Error(err.Error())
+	}
+
+	//<-done
+	/*
+		ticker := time.NewTicker(h.refreshInterval)
+		go func() {
+			for {
+				h.fileHosts.Refresh()
+				if h.redisHosts != nil {
+					h.redisHosts.Refresh()
+				}
+				<-ticker.C
+			}
+		}()
+	*/
 }
 
 type RedisHosts struct {

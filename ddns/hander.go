@@ -78,6 +78,12 @@ func NewHandler() *DDNSHandler {
 	return &DDNSHandler{resolver, cache, negCache, hosts}
 }
 
+func (h *DDNSHandler) close() {
+	if h.hosts.hostWatcher != nil {
+		h.hosts.hostWatcher.Close()
+	}
+}
+
 func (h *DDNSHandler) do(Net string, w dns.ResponseWriter, req *dns.Msg) {
 	q := req.Question[0]
 	Q := Question{UnFqdn(q.Name), dns.TypeToString[q.Qtype], dns.ClassToString[q.Qclass]}

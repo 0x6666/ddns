@@ -13,6 +13,14 @@ type Server struct {
 	Port     int
 	RTimeout time.Duration
 	WTimeout time.Duration
+
+	h *DDNSHandler
+}
+
+func (s *Server) Stop() {
+	if s.h != nil {
+		s.h.close()
+	}
 }
 
 func (s *Server) Addr() string {
@@ -24,13 +32,13 @@ func (s *Server) Addr() string {
 
 func (s *Server) Run() {
 
-	Handler := NewHandler()
+	s.h = NewHandler()
 
 	tcpHandler := dns.NewServeMux()
-	tcpHandler.HandleFunc(".", Handler.DoTCP)
+	tcpHandler.HandleFunc(".", s.h.DoTCP)
 
 	udpHandler := dns.NewServeMux()
-	udpHandler.HandleFunc(".", Handler.DoUDP)
+	udpHandler.HandleFunc(".", s.h.DoUDP)
 
 	tcpServer := &dns.Server{Addr: s.Addr(),
 		Net:          "tcp",

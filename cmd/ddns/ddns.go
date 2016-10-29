@@ -38,6 +38,7 @@ forever:
 		select {
 		case <-sig:
 			log.Debug("signal received, stopping")
+			server.Stop()
 			break forever
 		}
 	}
