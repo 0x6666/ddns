@@ -101,7 +101,7 @@ func (h *Hosts) refresh() {
 			case event := <-h.hostWatcher.Events:
 				log.Info("event: %v", event)
 				if event.Op&fsnotify.Write == fsnotify.Write {
-					log.Info("modified file:", event.Name)
+					log.Info("modified file: %v", event.Name)
 					h.fileHosts.Refresh()
 					if h.redisHosts != nil {
 						h.redisHosts.Refresh()
