@@ -3,6 +3,14 @@
 debug=true
 addr="192.168.0.105"
 port=53
+enableweb=true
+enabledns=false
+
+[web]
+port=8080
+
+[sqlite]
+path="data.db"
 
 [mysql]
 username = "root"
@@ -29,7 +37,6 @@ host-file = "/etc/hosts"
 redis-enable = false
 redis-key = "godns:hosts"
 ttl = 600
-refresh-interval = 5 # 5 seconds
 
 [redis]
 host = "127.0.0.1"

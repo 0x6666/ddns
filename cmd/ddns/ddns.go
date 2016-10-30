@@ -8,7 +8,10 @@ import (
 
 	"github.com/inimei/backup/log"
 	"github.com/inimei/ddns/config"
+	"github.com/inimei/ddns/data"
+	"github.com/inimei/ddns/data/sqlite"
 	"github.com/inimei/ddns/ddns"
+	"github.com/inimei/ddns/web"
 )
 
 func main() {
@@ -16,14 +19,29 @@ func main() {
 	log.SetLevel(log.LevelInfo | log.LevelDebug | log.LevelWarn | log.LevelError)
 	defer log.Close()
 
-	server := &ddns.Server{
-		Host:     config.Data.Server.Addr,
-		Port:     config.Data.Server.Port,
-		RTimeout: 5 * time.Second,
-		WTimeout: 5 * time.Second,
+	var db data.IDatabase
+	db = sqlite.NewSqlite()
+	if err := db.Init(); err != nil {
+		log.Error(err.Error())
+		return
 	}
 
-	server.Run()
+	var server *ddns.Server
+	if config.Data.Server.EnableDNS {
+		server = &ddns.Server{
+			Host:     config.Data.Server.Addr,
+			Port:     config.Data.Server.Port,
+			RTimeout: 5 * time.Second,
+			WTimeout: 5 * time.Second,
+		}
+		server.Run()
+	}
+
+	var ws *web.WebServer
+	if config.Data.Server.EnableWeb {
+		ws = &web.WebServer{}
+		ws.Start(db)
+	}
 
 	if config.Data.Server.Debug {
 		go profileCPU()
@@ -38,7 +56,19 @@ forever:
 		select {
 		case <-sig:
 			log.Debug("signal received, stopping")
-			server.Stop()
+
+			if ws != nil {
+				ws.Stop()
+			}
+
+			if server != nil {
+				server.Stop()
+			}
+
+			if db != nil {
+				db.Close()
+			}
+
 			break forever
 		}
 	}
@@ -69,5 +99,4 @@ func profileMEM() {
 		pprof.WriteHeapProfile(f)
 		f.Close()
 	})
-
 }

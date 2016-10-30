@@ -51,13 +51,26 @@ func (s RedisSettings) Addr() string {
 	return s.Host + ":" + strconv.Itoa(s.Port)
 }
 
-type cfgData struct {
-	Server struct {
-		Debug bool   `toml:"debug"`
-		Addr  string `toml:"addr"`
-		Port  int    `toml:"port"`
-	} `toml:"server"`
+type ServerSetting struct {
+	Debug     bool   `toml:"debug"`
+	Addr      string `toml:"addr"`
+	Port      int    `toml:"port"`
+	EnableWeb bool   `toml:"enableweb"`
+	EnableDNS bool   `toml:"enabledns"`
+}
 
+type WebSetting struct {
+	Port int `toml:"port"`
+}
+
+type SqliteSetting struct {
+	Path string `toml:"path"`
+}
+
+type cfgData struct {
+	Server ServerSetting  `toml:"server"`
+	Web    WebSetting     `toml:"web"`
+	Sqlite SqliteSetting  `toml:"sqlite"`
 	Sql    SqlConfig      `toml:"mysql"`
 	Cache  CacheSettings  `toml:"cache"`
 	Resolv ResolvSettings `toml:"resolv"`
@@ -95,16 +108,16 @@ func initialize(configFilePath string) error {
 }
 
 // CurDir current dir
-func CurDir() (string, error) {
+func CurDir() string {
 	dir, err := filepath.Abs(filepath.Dir(os.Args[0]))
 	if err != nil {
-		return "", err
+		panic(err)
 	}
-	return dir, nil
+	return dir
 }
 
 func init() {
-	dir, _ := CurDir()
+	dir := CurDir()
 
 	err := initialize(dir + "/ddns.toml")
 	if err != nil {
