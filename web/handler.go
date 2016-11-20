@@ -7,7 +7,7 @@ import (
 	"strconv"
 
 	"github.com/gin-gonic/gin"
-	"wpsgit.kingsoft.net/wpsep/util/log/log"
+	"github.com/inimei/backup/log"
 )
 
 const (
