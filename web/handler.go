@@ -87,7 +87,7 @@ func (h *handler) getRecodes(c *gin.Context) {
 	c.JSON(http.StatusOK, res)
 }
 
-func (h *handler) newRecodes(c *gin.Context) {
+func (h *handler) newRecode(c *gin.Context) {
 	c.Redirect(http.StatusFound, "/html/index.html")
 }
 

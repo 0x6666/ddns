@@ -50,6 +50,7 @@ function on_init_recode_lists() {
 
 	var $table = $('#tb_recodes'),
 		$remove = $('#remove'),
+		$add = $('#add'),
 		selections = [];
 
 	function initTable() {
@@ -58,45 +59,28 @@ function on_init_recode_lists() {
 			columns: [
 				[
 					{
-						title: 'Item ID',
+						title: 'ID',
 						field: 'id',
 						align: 'center',
 						valign: 'middle',
 						//sortable: true,
 						footerFormatter: totalTextFormatter
 					}, {
-						field: 'name',
-						title: 'Item Name',
+						field: 'domain',
+						title: 'Domain',
 						//sortable: true,
 						editable: true,
 						footerFormatter: totalNameFormatter,
 						align: 'center'
 					}, {
-						field: 'price',
-						title: 'Item Price',
+						field: 'key',
+						title: 'Update Key',
 						//sortable: true,
 						align: 'center',
-						editable: {
-							type: 'text',
-							title: 'Item Price',
-							validate: function (value) {
-								value = $.trim(value);
-								if (!value) {
-									return 'This field is required';
-								}
-								if (!/^\$/.test(value)) {
-									return 'This field needs to start width $.'
-								}
-								var data = $table.bootstrapTable('getData'),
-									index = $(this).parents('tr').data('index');
-								console.log(data[index]);
-								return '';
-							}
-						},
 						footerFormatter: totalPriceFormatter
 					}, {
 						field: 'operate',
-						title: 'Item Operate',
+						title: 'Operate',
 						align: 'center',
 						events: operateEvents,
 						formatter: operateFormatter
@@ -138,6 +122,14 @@ function on_init_recode_lists() {
 			});
 			$remove.prop('disabled', true);
 		});
+		$add.click(function () {
+			var randomId = Number(new Date());
+			$table.bootstrapTable('insertRow', {index: 1, row: {
+				id : randomId,
+				domain : 'test.site',
+				key : '',
+			}});
+		});
 		$(window).resize(function () {
 			$table.bootstrapTable('resetView', {
 				height: getHeight()
@@ -164,24 +156,24 @@ function on_init_recode_lists() {
 	}
 	function operateFormatter(value, row, index) {
 		return [
-			'<a class="like" href="javascript:void(0)" title="Like">',
-			'<i class="glyphicon glyphicon-heart"></i>',
-			'</a>  ',
-			'<a class="remove" href="javascript:void(0)" title="Remove">',
-			'<i class="glyphicon glyphicon-remove"></i>',
+			'<a class="save" href="javascript:void(0)" title="Like">',
+			'<i class="	glyphicon glyphicon-saved"></i>',
 			'</a>'
+			/*'<a class="remove" href="javascript:void(0)" title="Remove">',
+			'<i class="glyphicon glyphicon-remove"></i>',
+			'</a>'*/
 		].join('');
 	}
 	window.operateEvents = {
-		'click .like': function (e, value, row, index) {
+		'click .save': function (e, value, row, index) {
 			alert('You click like action, row: ' + JSON.stringify(row));
-		},
+		}/*,
 		'click .remove': function (e, value, row, index) {
 			$table.bootstrapTable('remove', {
 				field: 'id',
 				values: [row.id]
 			});
-		}
+		}*/
 	};
 	function totalTextFormatter(data) {
 		return 'Total';
@@ -203,9 +195,9 @@ function on_init_recode_lists() {
 		var scripts = [
 			location.search.substring(1) ||
 			'/vendors/bootstrap-table-1.11.0/extensions/export/bootstrap-table-export.js',
-			'http://rawgit.com/hhurz/tableExport.jquery.plugin/master/tableExport.js',
+			'/vendors/tableExport.jquery.plugin/tableExport.js',
 			'/vendors/bootstrap-table-1.11.0/extensions/editable/bootstrap-table-editable.js',
-			'http://rawgit.com/vitalets/x-editable/master/dist/bootstrap3-editable/js/bootstrap-editable.js'
+			'/vendors/x-editable/bootstrap-editable.js'
 		];
 
 		load_series(scripts, initTable);

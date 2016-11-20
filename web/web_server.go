@@ -61,7 +61,7 @@ func (ws *WebServer) regHandler() {
 	ws.e.GET(pRoot, ws.h.root)
 
 	ws.e.GET(pRecodes, ws.h.getRecodes)
-	ws.e.POST(pRecodes, ws.h.newRecodes)
+	ws.e.POST(pRecodes, ws.h.newRecode)
 	ws.e.GET(pRecode, ws.h.getRecode)
 	ws.e.POST(pRecode, ws.h.getRecode)
 	ws.e.PATCH(pRecode, ws.h.getRecode)
