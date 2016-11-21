@@ -22,4 +22,4 @@ else
 	ln -s $GOPATH/src/github.com/inimei/ddns/ddns_static $static
 fi
 
-/home/inimei/go/gopath/bin/ddns
+$GOPATH/bin/ddns

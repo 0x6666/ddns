@@ -6,7 +6,7 @@ import (
 )
 
 type Model struct {
-	ID        uint `gorm:"primary_key"`
+	ID        int64 `gorm:"primary_key"`
 	CreatedAt time.Time
 	UpdatedAt time.Time
 }
@@ -25,13 +25,12 @@ type Recode struct {
 	Model
 	UserID int `gorm:"index"`
 
-	Dynamic   bool           //是否未动态
-	UpdateKey sql.NullString `gorm:"unique_index"`
-
-	RecordType  int
-	RecordName  string
-	RecodeValue string
-	TTL         int
+	Dynamic     bool           `gorm:"column:dynamic"` //是否未动态
+	UpdateKey   sql.NullString `gorm:"unique_index"`
+	RecordType  int            `gorm:"column:type"` // 1 ipv4
+	RecordName  string         `gorm:"column:name"`
+	RecodeValue string         `gorm:"column:value"`
+	TTL         int            `gorm:"column:ttl"`
 }
 
 func (Recode) TableName() string {

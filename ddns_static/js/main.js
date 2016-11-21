@@ -66,8 +66,29 @@ function on_init_recode_lists() {
 						//sortable: true,
 						footerFormatter: totalTextFormatter
 					}, {
-						field: 'domain',
+						field: 'name',
 						title: 'Domain',
+						//sortable: true,
+						editable: true,
+						footerFormatter: totalNameFormatter,
+						align: 'center'
+					}, {
+						field: 'value',
+						title: 'Value',
+						//sortable: true,
+						editable: true,
+						footerFormatter: totalNameFormatter,
+						align: 'center'
+					}, {
+						field: 'ttl',
+						title: 'TTL',
+						//sortable: true,
+						editable: true,
+						footerFormatter: totalNameFormatter,
+						align: 'center'
+					}, {
+						field: 'dynamic',
+						title: 'Dynamic',
 						//sortable: true,
 						editable: true,
 						footerFormatter: totalNameFormatter,
@@ -89,7 +110,8 @@ function on_init_recode_lists() {
 			],
 			queryParams: function (params) {
 				return params;
-			}
+			},
+			responseHandler: responseHandler
 		});
 		// sometimes footer render error.
 		//setTimeout(function () {
@@ -123,12 +145,18 @@ function on_init_recode_lists() {
 			$remove.prop('disabled', true);
 		});
 		$add.click(function () {
-			var randomId = Number(new Date());
-			$table.bootstrapTable('insertRow', {index: 1, row: {
-				id : randomId,
-				domain : 'test.site',
-				key : '',
-			}});
+			//var randomId = Number(new Date());
+			$table.bootstrapTable('insertRow', {
+				index: 0,
+				row: {
+					id: '',
+					name: 'test.site',
+					key: '',
+					value: '',
+					ttl: 600,
+					dynamic: true
+				}
+			});
 		});
 		$(window).resize(function () {
 			$table.bootstrapTable('resetView', {
@@ -142,10 +170,23 @@ function on_init_recode_lists() {
 		});
 	}
 	function responseHandler(res) {
-		$.each(res.rows, function (i, row) {
-			row.state = $.inArray(row.id, selections) !== -1;
-		});
-		return res;
+		if (res) {
+			if (res.code == "ok") {
+				return {
+					"total": res.recodes.length,
+					"rows": res.recodes
+				}
+			} else {
+				var msg = res.code;
+				if (res.msg && res.code.length)
+					msg += ("   " + res.msg)
+				alert(msg);
+			}
+		}
+		return {
+			"total": 0,
+			"rows": []
+		};
 	}
 	function detailFormatter(index, row) {
 		var html = [];
@@ -158,15 +199,29 @@ function on_init_recode_lists() {
 		return [
 			'<a class="save" href="javascript:void(0)" title="Like">',
 			'<i class="	glyphicon glyphicon-saved"></i>',
-			'</a>'
-			/*'<a class="remove" href="javascript:void(0)" title="Remove">',
+			'</a>',
+			'<a class="remove" href="javascript:void(0)" title="Remove">',
 			'<i class="glyphicon glyphicon-remove"></i>',
-			'</a>'*/
+			'</a>'
 		].join('');
 	}
 	window.operateEvents = {
-		'click .save': function (e, value, row, index) {
-			alert('You click like action, row: ' + JSON.stringify(row));
+		'click .save': function (e, value, row, idx) {
+			ddns_new_recode({ name: row.name, value: row.value, ttl: row.ttl },
+				function (rspData) {
+					if (rspData.code == "ok") {
+						$table.bootstrapTable('updateRow', { index: idx, row: { id: rspData.id } });
+					} else {
+						var msg = rspData.code;
+						if (rspData.msg && rspData.msg.length)
+							msg += ("   " + rspData.msg)
+						alert(msg);
+					}
+				},
+				function (a, b, c) {
+
+				}
+			);
 		}/*,
 		'click .remove': function (e, value, row, index) {
 			$table.bootstrapTable('remove', {

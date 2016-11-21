@@ -11,7 +11,8 @@ import (
 )
 
 type SqliteDB struct {
-	db *gorm.DB
+	db   *gorm.DB
+	path string
 }
 
 func NewSqlite() *SqliteDB {
@@ -27,18 +28,20 @@ func (s *SqliteDB) Init() error {
 	}
 
 	if path[0] != '/' {
-		path = config.CurDir() + "/" + path
+		s.path = config.CurDir() + "/" + path
 	}
 
-	db, err := gorm.Open("sqlite3", path)
+	db, err := gorm.Open("sqlite3", s.path)
 	if err != nil {
 		log.Error(err.Error())
 		return err
 	}
 
-	defer db.Close()
+	//defer db.Close()
 
-	return db.AutoMigrate(&model.User{}, &model.Recode{}).Error
+	s.db = db.AutoMigrate(&model.User{}, &model.Recode{})
+
+	return db.Error
 }
 
 func (s *SqliteDB) Close() error {
@@ -49,9 +52,37 @@ func (s *SqliteDB) Close() error {
 }
 
 func (s *SqliteDB) CreateRecode(r *model.Recode) (int64, error) {
-	return 0, errs.ErrNotImplement
+	if !s.db.NewRecord(r) {
+		return 0, errs.ErrRecodeExist
+	}
+	if err := s.db.Create(r).Error; err != nil {
+		return 0, err
+	}
+	return r.ID, nil
 }
 
-func (s *SqliteDB) ReadData(offset, limit int) (map[string]interface{}, error) {
+func (s *SqliteDB) ReadData(offset, limit int) ([]*model.Recode, error) {
+	rc := []*model.Recode{}
+	db := s.db.Offset(offset).Limit(limit).Find(&rc)
+	if db.Error != nil {
+		log.Error(db.Error.Error())
+		return nil, db.Error
+	}
+	return rc, nil
+}
+
+func (s *SqliteDB) FindByName(name string) (*model.Recode, error) {
+	var recode model.Recode
+	if err := s.db.First(&recode, "name = ?", name).Error; err != nil {
+		return nil, err
+	}
+	return &recode, nil
+}
+
+func (s *SqliteDB) GetRecode(id int64) (*model.Recode, error) {
 	return nil, errs.ErrNotImplement
+}
+
+func (s *SqliteDB) DeleteRecode(id int64) error {
+	return errs.ErrNotImplement
 }
