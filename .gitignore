@@ -1,2 +1,3 @@
-/ddns_static/vendors/bootstrap-table-1.11.0/extensions
+/ddns_static/vendors/bootstrap-table-1.11.0/extensions/*
+!/ddns_static/vendors/bootstrap-table-1.11.0/extensions/export
 /ddns_static/vendors/bootstrap-table-1.11.0/locale
