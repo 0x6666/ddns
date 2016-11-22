@@ -7,6 +7,7 @@ import (
 
 	"github.com/inimei/backup/log"
 	"github.com/inimei/ddns/config"
+	"github.com/inimei/ddns/data"
 	"github.com/miekg/dns"
 )
 
@@ -30,9 +31,10 @@ type DDNSHandler struct {
 	resolver        *Resolver
 	cache, negCache Cache
 	hosts           Hosts
+	dbrecodes       *DBRecodes
 }
 
-func NewHandler() *DDNSHandler {
+func NewHandler(db data.IDatabase) *DDNSHandler {
 
 	var (
 		cacheConfig     config.CacheSettings
@@ -75,7 +77,12 @@ func NewHandler() *DDNSHandler {
 		hosts = NewHosts(config.Data.Hosts, config.Data.Redis)
 	}
 
-	return &DDNSHandler{resolver, cache, negCache, hosts}
+	var recodes *DBRecodes
+	if db != nil {
+		recodes = NewDBRecodes(db)
+	}
+
+	return &DDNSHandler{resolver, cache, negCache, hosts, recodes}
 }
 
 func (h *DDNSHandler) close() {
@@ -98,45 +105,61 @@ func (h *DDNSHandler) do(Net string, w dns.ResponseWriter, req *dns.Msg) {
 
 	IPQuery := h.isIPQuery(q)
 
-	// Query hosts
-	if config.Data.Hosts.Enable && IPQuery > 0 {
-		if ips, ok := h.hosts.Get(Q.qname, IPQuery); ok {
-			m := new(dns.Msg)
-			m.SetReply(req)
+	rspByIps := func(ips []net.IP, ttl uint32) {
+		m := new(dns.Msg)
+		m.SetReply(req)
 
-			switch IPQuery {
-			case _IP4Query:
-				rr_header := dns.RR_Header{
-					Name:   q.Name,
-					Rrtype: dns.TypeA,
-					Class:  dns.ClassINET,
-					Ttl:    config.Data.Hosts.TTL,
-				}
-				for _, ip := range ips {
-					a := &dns.A{rr_header, ip}
-					m.Answer = append(m.Answer, a)
-				}
-			case _IP6Query:
-				rr_header := dns.RR_Header{
-					Name:   q.Name,
-					Rrtype: dns.TypeAAAA,
-					Class:  dns.ClassINET,
-					Ttl:    config.Data.Hosts.TTL,
-				}
-				for _, ip := range ips {
-					aaaa := &dns.AAAA{rr_header, ip}
-					m.Answer = append(m.Answer, aaaa)
-				}
+		switch IPQuery {
+		case _IP4Query:
+			rr_header := dns.RR_Header{
+				Name:   q.Name,
+				Rrtype: dns.TypeA,
+				Class:  dns.ClassINET,
+				Ttl:    ttl,
 			}
-
-			w.WriteMsg(m)
-			log.Debug("%s found in hosts file", Q.qname)
-			return
-		} else {
-			log.Debug("%s didn't found in hosts file", Q.qname)
+			for _, ip := range ips {
+				a := &dns.A{rr_header, ip}
+				m.Answer = append(m.Answer, a)
+			}
+		case _IP6Query:
+			rr_header := dns.RR_Header{
+				Name:   q.Name,
+				Rrtype: dns.TypeAAAA,
+				Class:  dns.ClassINET,
+				Ttl:    ttl,
+			}
+			for _, ip := range ips {
+				aaaa := &dns.AAAA{rr_header, ip}
+				m.Answer = append(m.Answer, aaaa)
+			}
 		}
+
+		w.WriteMsg(m)
 	}
 
+	//
+	//	query in database
+	//
+	if h.dbrecodes != nil {
+		if ips, ttl, ok := h.dbrecodes.Get(Q.qname, IPQuery); ok {
+			rspByIps(ips, uint32(ttl))
+			log.Debug("%s found in database", Q.qname)
+			return
+		}
+		log.Debug("%s didn't found in database", Q.qname)
+	}
+
+	if config.Data.Hosts.Enable && IPQuery > 0 {
+		if ips, ok := h.hosts.Get(Q.qname, IPQuery); ok {
+			rspByIps(ips, config.Data.Hosts.TTL)
+			log.Debug("%s found in hosts file", Q.qname)
+			return
+		}
+		log.Debug("%s didn't found in hosts file", Q.qname)
+	}
+
+	//
+	// query in cache
 	// Only query cache when qtype == 'A'|'AAAA' , qclass == 'IN'
 	key := KeyGen(Q)
 	if IPQuery > 0 {

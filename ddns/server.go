@@ -5,6 +5,7 @@ import (
 	"time"
 
 	"github.com/inimei/backup/log"
+	"github.com/inimei/ddns/data"
 	"github.com/miekg/dns"
 )
 
@@ -13,6 +14,8 @@ type Server struct {
 	Port     int
 	RTimeout time.Duration
 	WTimeout time.Duration
+
+	Db data.IDatabase
 
 	h *DDNSHandler
 }
@@ -32,7 +35,7 @@ func (s *Server) Addr() string {
 
 func (s *Server) Run() {
 
-	s.h = NewHandler()
+	s.h = NewHandler(s.Db)
 
 	tcpHandler := dns.NewServeMux()
 	tcpHandler.HandleFunc(".", s.h.DoTCP)

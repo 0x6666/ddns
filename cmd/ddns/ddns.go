@@ -33,6 +33,7 @@ func main() {
 			Port:     config.Data.Server.Port,
 			RTimeout: 5 * time.Second,
 			WTimeout: 5 * time.Second,
+			Db:       db,
 		}
 		server.Run()
 	}
