@@ -80,9 +80,17 @@ func (s *SqliteDB) FindByName(name string) (*model.Recode, error) {
 }
 
 func (s *SqliteDB) GetRecode(id int64) (*model.Recode, error) {
-	return nil, errs.ErrNotImplement
+	var r model.Recode
+	err := s.db.First(&r, id).Error
+	if err != nil {
+		log.Error(err.Error())
+		return nil, err
+	}
+	return &r, nil
 }
 
 func (s *SqliteDB) DeleteRecode(id int64) error {
-	return errs.ErrNotImplement
+	r := &model.Recode{}
+	r.ID = id
+	return s.db.Delete(r).Error
 }

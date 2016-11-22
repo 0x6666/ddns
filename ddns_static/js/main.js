@@ -145,7 +145,7 @@ function on_init_recode_lists() {
 			$remove.prop('disabled', true);
 		});
 		$add.click(function () {
-			//var randomId = Number(new Date());
+			var randomId = Number(new Date());
 			$table.bootstrapTable('insertRow', {
 				index: 0,
 				row: {
@@ -154,7 +154,8 @@ function on_init_recode_lists() {
 					key: '',
 					value: '',
 					ttl: 600,
-					dynamic: true
+					dynamic: true,
+					randomId: randomId
 				}
 			});
 		});
@@ -222,13 +223,35 @@ function on_init_recode_lists() {
 
 				}
 			);
-		}/*,
+		},
 		'click .remove': function (e, value, row, index) {
-			$table.bootstrapTable('remove', {
-				field: 'id',
-				values: [row.id]
-			});
-		}*/
+
+			if (row.id == undefined || row.id == '') {
+				if (row.randomId) {
+					$table.bootstrapTable('remove', {
+						field: 'randomId',
+						values: [row.randomId]
+					});
+				}
+			} else {
+				ddns_delete_recode(row.id,
+					function (data) {
+						if (data.code === "ok") {
+							$table.bootstrapTable('remove', {
+								field: 'id',
+								values: [row.id]
+							});
+						} else {
+							var msg = data.code;
+							if (data.msg && data.msg.length)
+								msg += ("   " + data.msg)
+							alert(msg);
+						}
+					},
+					function (a, b, c) { }
+				);
+			}
+		}
 	};
 	function totalTextFormatter(data) {
 		return 'Total';

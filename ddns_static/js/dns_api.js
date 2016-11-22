@@ -21,6 +21,11 @@
 		basic_func("POST", "/recodes", data, suCallback, failCallback);
 	};
 
+	var delete_recode = function (id, suCallback, failCallback) {
+		basic_func("DELETE", "/recode/" + id, undefined, suCallback, failCallback);
+	};
+
 	exports.ddns_new_recode = new_recode;
+	exports.ddns_delete_recode = delete_recode;
 
 })((typeof (exports) === "object" ? exports : window), jQuery);

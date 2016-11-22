@@ -73,21 +73,21 @@ type handler struct {
 
 func (h *handler) rspOk(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{
-		"result": CodeOK,
+		"code": CodeOK,
 	})
 }
 
 func (h *handler) rspError(c *gin.Context, err error) {
 	c.JSON(http.StatusOK, gin.H{
-		"result": CodeUnknowError,
-		"msg":    err.Error(),
+		"code": CodeUnknowError,
+		"msg":  err.Error(),
 	})
 }
 
 func (h *handler) rspErrorCode(c *gin.Context, code, msg string) {
 	c.JSON(http.StatusOK, gin.H{
-		"result": code,
-		"msg":    msg,
+		"code": code,
+		"msg":  msg,
 	})
 }
 
