@@ -79,6 +79,14 @@ func (s *SqliteDB) FindByName(name string) (*model.Recode, error) {
 	return &recode, nil
 }
 
+func (s *SqliteDB) FindByKey(key string) (*model.Recode, error) {
+	var recode model.Recode
+	if err := s.db.First(&recode, "key = ?", key).Error; err != nil {
+		return nil, err
+	}
+	return &recode, nil
+}
+
 func (s *SqliteDB) GetRecode(id int64) (*model.Recode, error) {
 	var r model.Recode
 	err := s.db.First(&r, id).Error
@@ -93,4 +101,12 @@ func (s *SqliteDB) DeleteRecode(id int64) error {
 	r := &model.Recode{}
 	r.ID = id
 	return s.db.Delete(r).Error
+}
+
+func (s *SqliteDB) UpdateRecode(r *model.Recode) error {
+	db := s.db.Save(r)
+	if db.Error != nil {
+		log.Error(db.Error.Error())
+	}
+	return db.Error
 }

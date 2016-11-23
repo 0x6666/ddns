@@ -26,7 +26,7 @@ type Recode struct {
 	UserID int `gorm:"index"`
 
 	Dynamic     bool           `gorm:"column:dynamic"` //是否未动态
-	UpdateKey   sql.NullString `gorm:"unique_index"`
+	UpdateKey   sql.NullString `gorm:"column:key;unique_index"`
 	RecordType  int            `gorm:"column:type"` // 1 ipv4
 	RecordName  string         `gorm:"column:name"`
 	RecodeValue string         `gorm:"column:value"`

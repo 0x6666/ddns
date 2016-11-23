@@ -1,6 +1,7 @@
 package web
 
 import (
+	"net"
 	"net/http"
 	"strings"
 
@@ -20,6 +21,8 @@ const (
 
 	pRecodes = "/recodes"
 	pRecode  = "/recode/:id"
+
+	pUpdate = "/update"
 )
 
 const (
@@ -39,6 +42,8 @@ const (
 	CodeUnknowError  = "UnknowError"
 	CodeInvalidParam = "InvalidParam"
 	CodeRecodeExist  = "RecodeExist"
+	CodeKeyIsEmpty   = "KeyIsEmpty"
+	CodeInvalidIP    = "InvalidIP"
 )
 
 func requestType(r *http.Request) string {
@@ -279,4 +284,54 @@ func (h *handler) deleteRecode(c *gin.Context) {
 	} else {
 		h.rspOk(c)
 	}
+}
+
+// updateRecode -> [POST] :/update
+//
+// Ret Code:[200]
+//
+// 更新一个记录
+//
+// 成功返回值
+// 	{
+//		"result": "ok"
+//	}
+//
+// 失败返回值
+//	{
+//		"result": "xxx"
+//	}
+//
+func (h *handler) updateRecode(c *gin.Context) {
+
+	key := c.PostForm("key")
+	if len(key) == 0 {
+		h.rspErrorCode(c, CodeKeyIsEmpty, "key is empty")
+		return
+	}
+
+	ip := c.PostForm("ip")
+	if len(ip) != 0 {
+		if i := net.ParseIP(ip); i == nil {
+			h.rspErrorCode(c, CodeInvalidIP, "invalid ip address")
+			return
+		}
+	}
+
+	recode, err := h.ws.db.FindByKey(key)
+	if err != nil {
+		log.Error(err.Error())
+		h.rspError(c, err)
+		return
+	}
+
+	recode.RecodeValue = ip
+	err = h.ws.db.UpdateRecode(recode)
+	if err != nil {
+		log.Error(err.Error())
+		h.rspError(c, err)
+		return
+	}
+
+	h.rspOk(c)
 }

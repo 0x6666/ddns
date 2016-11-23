@@ -66,4 +66,6 @@ func (ws *WebServer) regHandler() {
 	ws.e.POST(pRecode, ws.h.getRecode)
 	ws.e.PATCH(pRecode, ws.h.getRecode)
 	ws.e.DELETE(pRecode, ws.h.deleteRecode)
+
+	ws.e.POST(pUpdate, ws.h.updateRecode)
 }
