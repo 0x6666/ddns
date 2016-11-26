@@ -57,7 +57,7 @@ func (ss *SlaveServer) Init(db data.IDatabase) error {
 }
 
 func (ss *SlaveServer) Start() {
-	ticker := time.NewTicker(time.Second * 5)
+	ticker := time.NewTicker(time.Second * time.Duration(config.Data.Slave.UpdateTime))
 	go func() {
 		for {
 			ss.checkUpdate()

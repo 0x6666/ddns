@@ -11,6 +11,7 @@ master=true
 master_host=""
 accesskey=""
 secretKey=""
+update_time=300  //seconds
 
 [web]
 port=22280

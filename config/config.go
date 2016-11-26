@@ -43,6 +43,7 @@ type SlaveSetting struct {
 	MasterHost string `toml:"master_host"`
 	Accesskey  string `toml:"accesskey"`
 	SecretKey  string `toml:"secretKey"`
+	UpdateTime int64  `toml:"update_time"`
 }
 
 type WebSetting struct {
@@ -89,8 +90,13 @@ func initialize(configFilePath string) error {
 		return err
 	}
 
-	if Data.Server.Master == false && strings.HasSuffix(Data.Slave.MasterHost, "/") {
-		Data.Slave.MasterHost = strings.TrimSuffix(Data.Slave.MasterHost, "/")
+	if Data.Server.Master == false {
+		if strings.HasSuffix(Data.Slave.MasterHost, "/") {
+			Data.Slave.MasterHost = strings.TrimSuffix(Data.Slave.MasterHost, "/")
+		}
+		if Data.Slave.UpdateTime == 0 {
+			Data.Slave.UpdateTime = 300
+		}
 	}
 
 	return nil
