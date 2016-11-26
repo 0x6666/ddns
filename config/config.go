@@ -10,14 +10,6 @@ import (
 	"github.com/inimei/backup/log"
 )
 
-type SqlConfig struct {
-	Username     string `toml:"username"`
-	Password     string `toml:"password"`
-	URL          string `toml:"host"`
-	Port         string `toml:"port"`
-	DatabaseName string `toml:"database"`
-}
-
 type CacheSettings struct {
 	Backend  string `toml:"backend"`
 	Expire   int    `toml:"expire"`
@@ -43,6 +35,13 @@ type ServerSetting struct {
 	Port      int    `toml:"port"`
 	EnableWeb bool   `toml:"enableweb"`
 	EnableDNS bool   `toml:"enabledns"`
+	Master    bool   `toml:"master"`
+}
+
+type SlaveSetting struct {
+	MasterHost bool   `toml:"master_host"`
+	Accesskey  string `toml:"accesskey"`
+	SecretKey  string `toml:"secretKey"`
 }
 
 type WebSetting struct {

@@ -1,10 +1,16 @@
 
 [server]
 debug=true
-addr="192.168.0.105"
+addr=""
 port=53
 enableweb=true
 enabledns=false
+master=true
+
+[slave]
+master_host=""
+accesskey=""
+secretKey=""
 
 [web]
 port=22280
