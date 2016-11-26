@@ -9,7 +9,7 @@ import (
 	"github.com/inimei/ddns/data/model"
 )
 
-// apiGetDataSchemaVersion -> [POST] :/api/schemaversion
+// apiGetDataSchemaVersion -> [POST] :/api/dataversion
 //
 // Ret Code:[200]
 //
@@ -26,7 +26,12 @@ func (h *handler) apiGetDataSchemaVersion(c *gin.Context) {
 
 	res := map[string]interface{}{}
 	res["code"] = CodeOK
-	res["version"] = model.CurrentVersion
+
+	v := model.Version{}
+	v.SchemaVersion = model.CurrentVersion
+	v.DataVersion = h.ws.db.GetVersion()
+
+	res["version"] = v
 
 	c.JSON(http.StatusOK, res)
 }

@@ -81,5 +81,5 @@ func (ws *WebServer) regAPIHandler() {
 	group := ws.e.Group("/api", ws.h.SignMiddleware)
 
 	group.GET("/recodes", ws.h.apiGetRecodes)
-	group.GET("/schemaversion", ws.h.apiGetDataSchemaVersion)
+	group.GET("/dataversion", ws.h.apiGetDataSchemaVersion)
 }

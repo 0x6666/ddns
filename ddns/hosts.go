@@ -88,7 +88,7 @@ func (h *Hosts) refresh() {
 					h.fileHosts.Refresh()
 				}
 			case err := <-h.hostWatcher.Errors:
-				log.Info("error:", err)
+				log.Info("error: %v", err)
 			}
 		}
 	}()

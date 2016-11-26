@@ -121,3 +121,15 @@ func VerifySignature(authType, accessID, sig string, r *http.Request, w http.Res
 
 	return nil
 }
+
+func SignRequest(req *http.Request, url, accessID, secretKey string) {
+	md5 := getMd5([]byte(url))
+	req.Header.Set("Content-Md5", md5)
+	date := time.Now().Format("Mon, 2 Jan 2006 15:04:05 GMT")
+	req.Header.Set("Date", date)
+	ctType := "application/json"
+	req.Header.Set("Content-Type", ctType)
+
+	sig := sign(md5, ctType, date, secretKey)
+	req.Header.Set("Authorization", "DDNS-1:"+accessID+":"+sig)
+}

@@ -22,6 +22,11 @@ func (SchemaVersion) TableName() string {
 	return "schema_version"
 }
 
+type Version struct {
+	SchemaVersion string `json:"schema_version"`
+	DataVersion   int64  `json:"data_version"`
+}
+
 type User struct {
 	Model
 	Name    string `gorm:"size:255"`

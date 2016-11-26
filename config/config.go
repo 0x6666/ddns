@@ -39,7 +39,7 @@ type ServerSetting struct {
 }
 
 type SlaveSetting struct {
-	MasterHost bool   `toml:"master_host"`
+	MasterHost string `toml:"master_host"`
 	Accesskey  string `toml:"accesskey"`
 	SecretKey  string `toml:"secretKey"`
 }
@@ -54,6 +54,7 @@ type SqliteSetting struct {
 
 type cfgData struct {
 	Server ServerSetting  `toml:"server"`
+	Slave  SlaveSetting   `toml:"slave"`
 	Web    WebSetting     `toml:"web"`
 	Sqlite SqliteSetting  `toml:"sqlite"`
 	Cache  CacheSettings  `toml:"cache"`

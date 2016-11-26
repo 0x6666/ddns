@@ -1,8 +1,11 @@
 package sqlite
 
 import (
+	"sync"
+
 	"github.com/inimei/backup/log"
 	"github.com/inimei/ddns/config"
+	"github.com/inimei/ddns/data"
 	"github.com/inimei/ddns/data/model"
 	"github.com/inimei/ddns/errs"
 
@@ -13,6 +16,9 @@ import (
 type SqliteDB struct {
 	db   *gorm.DB
 	path string
+
+	version int64
+	mutex   sync.RWMutex
 }
 
 func NewSqlite() *SqliteDB {
@@ -74,6 +80,7 @@ func (s *SqliteDB) CreateRecode(r *model.Recode) (int64, error) {
 	if err := s.db.Create(r).Error; err != nil {
 		return 0, err
 	}
+	go s.updateVersion()
 	return r.ID, nil
 }
 
@@ -116,7 +123,13 @@ func (s *SqliteDB) GetRecode(id int64) (*model.Recode, error) {
 func (s *SqliteDB) DeleteRecode(id int64) error {
 	r := &model.Recode{}
 	r.ID = id
-	return s.db.Delete(r).Error
+	d := s.db.Delete(r)
+	go s.updateVersion()
+	return d.Error
+}
+
+func (s *SqliteDB) ClearRecodes() error {
+	return s.db.Delete(&model.Recode{}).Error
 }
 
 func (s *SqliteDB) UpdateRecode(r *model.Recode) error {
@@ -124,5 +137,49 @@ func (s *SqliteDB) UpdateRecode(r *model.Recode) error {
 	if db.Error != nil {
 		log.Error(db.Error.Error())
 	}
+
+	go s.updateVersion()
 	return db.Error
+}
+
+func (s *SqliteDB) GetVersion() int64 {
+	s.mutex.RLock()
+	defer s.mutex.RUnlock()
+	return s.version
+}
+
+func (s *SqliteDB) updateVersion() {
+	s.mutex.Lock()
+	defer s.mutex.Unlock()
+	s.version = s.version + 1
+}
+
+func (s *SqliteDB) SetVersion(v int64) {
+	if config.Data.Server.Master == false {
+		s.mutex.Lock()
+		defer s.mutex.Unlock()
+		s.version = v
+	} else {
+		log.Error("SetVersion for slave")
+	}
+}
+
+func (s *SqliteDB) BeginTransaction() (data.IDatabase, error) {
+	d := s.db.Begin()
+	if d.Error != nil {
+		return nil, d.Error
+	}
+
+	newDb := SqliteDB{}
+	newDb.db = d
+	newDb.version = s.GetVersion()
+	newDb.path = s.path
+	return &newDb, nil
+}
+
+func (s *SqliteDB) Rollback() error {
+	return s.db.Rollback().Error
+}
+func (s *SqliteDB) Commit() error {
+	return s.db.Commit().Error
 }

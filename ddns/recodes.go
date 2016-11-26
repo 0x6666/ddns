@@ -24,6 +24,8 @@ type DBRecodes struct {
 	sync.RWMutex
 
 	cache map[string]recode
+
+	cacheVersion int64
 }
 
 func NewDBRecodes(db data.IDatabase) *DBRecodes {
@@ -57,6 +59,10 @@ func (d *DBRecodes) Get(domain string, family int) ([]net.IP, int, bool) {
 
 func (d *DBRecodes) update() {
 
+	if d.cacheVersion == d.db.GetVersion() {
+		return
+	}
+
 	datas, err := d.db.ReadData(-1, -1)
 	if err != nil {
 		log.Error("ReadData failed: %v", err)
@@ -81,6 +87,7 @@ func (d *DBRecodes) update() {
 	d.Lock()
 	defer d.Unlock()
 	d.cache = cache
+	d.cacheVersion = d.db.GetVersion()
 }
 
 func (d *DBRecodes) refresh() {

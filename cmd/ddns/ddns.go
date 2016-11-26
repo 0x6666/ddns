@@ -11,6 +11,7 @@ import (
 	"github.com/inimei/ddns/data"
 	"github.com/inimei/ddns/data/sqlite"
 	"github.com/inimei/ddns/ddns"
+	"github.com/inimei/ddns/ddns/slave"
 	"github.com/inimei/ddns/web"
 )
 
@@ -36,6 +37,16 @@ func main() {
 			Db:       db,
 		}
 		server.Run()
+
+		if config.Data.Server.Master == false {
+			s := slave.SlaveServer{}
+			err := s.Init(db)
+			if err != nil {
+				log.Error("init slave failed: %v", err)
+			} else {
+				s.Start()
+			}
+		}
 	}
 
 	var ws *web.WebServer
