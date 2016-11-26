@@ -79,6 +79,7 @@ func (ss *SlaveServer) checkUpdate() {
 	}
 
 	if v.DataVersion == ss.db.GetVersion() {
+		log.Debug("the same data version....")
 		return
 	}
 
@@ -99,7 +100,7 @@ func (ss *SlaveServer) checkUpdate() {
 	}
 
 	defer func() {
-		if err != nil {
+		if err == nil {
 			db.Commit()
 		} else {
 			db.Rollback()

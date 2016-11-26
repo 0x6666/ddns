@@ -5,6 +5,7 @@ import (
 	"io/ioutil"
 	"os"
 	"path/filepath"
+	"strings"
 
 	"github.com/BurntSushi/toml"
 	"github.com/inimei/backup/log"
@@ -86,6 +87,10 @@ func initialize(configFilePath string) error {
 	if err := toml.Unmarshal(buf, &Data); err != nil {
 		log.Error("unmarshal config failed, %s", err)
 		return err
+	}
+
+	if Data.Server.Master == false && strings.HasSuffix(Data.Slave.MasterHost, "/") {
+		Data.Slave.MasterHost = strings.TrimSuffix(Data.Slave.MasterHost, "/")
 	}
 
 	return nil

@@ -298,6 +298,11 @@ func (h *handler) updateRecode(c *gin.Context) {
 		return
 	}
 
+	if recode.RecodeValue == ip {
+		h.rspOk(c)
+		return
+	}
+
 	recode.RecodeValue = ip
 	err = h.ws.db.UpdateRecode(recode)
 	if err != nil {
