@@ -13,6 +13,15 @@ type Model struct {
 	UpdatedAt time.Time
 }
 
+type SchemaVersion struct {
+	Model
+	Version string `gorm:"column:version"`
+}
+
+func (SchemaVersion) TableName() string {
+	return "schema_version"
+}
+
 type User struct {
 	Model
 	Name    string `gorm:"size:255"`

@@ -37,9 +37,25 @@ func (s *SqliteDB) Init() error {
 		return err
 	}
 
+	if !db.HasTable(&model.SchemaVersion{}) {
+		d := db.AutoMigrate(&model.SchemaVersion{})
+		if d.Error != nil {
+			log.Error("migrate failed: %v", d.Error.Error())
+			return d.Error
+		}
+		version := model.SchemaVersion{Version: model.CurrentVersion}
+		d = d.Create(&version)
+		if d.Error != nil {
+			log.Error("create schema version recode failed: %v", d.Error)
+			return d.Error
+		}
+	} else {
+		//TODO: check upgrade
+	}
+
 	//defer db.Close()
 
-	s.db = db.AutoMigrate(&model.User{}, &model.Recode{})
+	s.db = db.AutoMigrate(&model.User{}, &model.Recode{}, &model.SchemaVersion{})
 
 	return db.Error
 }

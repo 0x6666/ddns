@@ -82,5 +82,4 @@ func (ws *WebServer) regAPIHandler() {
 
 	group.GET("/recodes", ws.h.apiGetRecodes)
 	group.GET("/schemaversion", ws.h.apiGetDataSchemaVersion)
-
 }
