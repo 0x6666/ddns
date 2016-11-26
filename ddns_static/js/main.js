@@ -211,7 +211,7 @@ function on_init_recode_lists() {
 			ddns_new_recode({ name: row.name, value: row.value, ttl: row.ttl },
 				function (rspData) {
 					if (rspData.code == "ok") {
-						$table.bootstrapTable('updateRow', { index: idx, row: { id: rspData.id } });
+						$table.bootstrapTable('updateRow', { index: idx, row: { id: rspData.id, key: rspData.key } });
 					} else {
 						var msg = rspData.code;
 						if (rspData.msg && rspData.msg.length)

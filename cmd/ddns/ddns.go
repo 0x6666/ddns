@@ -76,7 +76,7 @@ forever:
 }
 
 func profileCPU() {
-	f, err := os.Create("godns.cprof")
+	f, err := os.Create("ddns.cprof")
 	if err != nil {
 		log.Error("%v", err)
 		return
@@ -90,7 +90,7 @@ func profileCPU() {
 }
 
 func profileMEM() {
-	f, err := os.Create("godns.mprof")
+	f, err := os.Create("ddns.mprof")
 	if err != nil {
 		log.Error("%v", err)
 		return

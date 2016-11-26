@@ -37,13 +37,17 @@ const (
 )
 
 const (
-	CodeOK           = "ok"
-	CodeDBError      = "DBError"
-	CodeUnknowError  = "UnknowError"
-	CodeInvalidParam = "InvalidParam"
-	CodeRecodeExist  = "RecodeExist"
-	CodeKeyIsEmpty   = "KeyIsEmpty"
-	CodeInvalidIP    = "InvalidIP"
+	CodeOK                 = "ok"
+	CodeDBError            = "DBError"
+	CodeUnknowError        = "UnknowError"
+	CodeInvalidParam       = "InvalidParam"
+	CodeRecodeExist        = "RecodeExist"
+	CodeKeyIsEmpty         = "KeyIsEmpty"
+	CodeInvalidIP          = "InvalidIP"
+	CodeNoAuthorization    = "NoAuthorization"
+	CodeAuthorizationError = "AuthorizationError"
+	CodeVerifySignature    = "VerifySignature"
+	CodeGetSecretKeyError  = "GetSecretKeyError"
 )
 
 func requestType(r *http.Request) string {
@@ -124,7 +128,7 @@ func (h *handler) getRecodeFromParam(c *gin.Context) (*model.Recode, error) {
 	return r, err
 }
 
-// newRecode -> [POST] :/recodes
+// getRecode -> [POST] :/recodes
 //
 // Ret Code:[200]
 //
@@ -157,38 +161,7 @@ func (h *handler) getRecodes(c *gin.Context) {
 		return
 	}
 
-	l := c.DefaultQuery("limit", "10")
-	o := c.DefaultQuery("offset", "0")
-
-	limit, _ := strconv.ParseInt(l, 10, 64)
-	offset, _ := strconv.ParseInt(o, 10, 64)
-
-	data, err := h.ws.db.ReadData(int(offset), int(limit))
-	if err != nil {
-		log.Error(err.Error())
-		h.rspError(c, err)
-		return
-	}
-
-	dastamap := []map[string]interface{}{}
-	for _, d := range data {
-		dataJosn := map[string]interface{}{}
-		dataJosn["id"] = d.ID
-		dataJosn["name"] = d.RecordName
-		dataJosn["dynamic"] = d.Dynamic
-		dataJosn["ttl"] = d.TTL
-		dataJosn["value"] = d.RecodeValue
-		if d.UpdateKey.Valid {
-			dataJosn["key"] = d.UpdateKey.String
-		}
-		dastamap = append(dastamap, dataJosn)
-	}
-
-	res := map[string]interface{}{}
-	res["code"] = CodeOK
-	res["recodes"] = dastamap
-
-	c.JSON(http.StatusOK, res)
+	h.apiGetRecodes(c)
 }
 
 // newRecode -> [POST] :/recodes

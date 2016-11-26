@@ -7,17 +7,10 @@ enableweb=true
 enabledns=false
 
 [web]
-port=2223
+port=22280
 
 [sqlite]
 path="data.db"
-
-[mysql]
-username = "root"
-password = "root"
-host = "127.0.0.1"
-port = "3306"
-database = "inimei"
 
 [cache]
 backend="memory"
@@ -34,12 +27,4 @@ interval = 200 # 200 milliseconds
 #If set false, will not query hosts file and redis hosts record
 enable = true
 host-file = "/etc/hosts"
-redis-enable = false
-redis-key = "godns:hosts"
 ttl = 600
-
-[redis]
-host = "127.0.0.1"
-port = 6379
-db = 0
-password =""

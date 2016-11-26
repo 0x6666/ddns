@@ -1,7 +1,5 @@
 # !/bin/bash
 
-set -e
-
 if [ -a "$GOPATH/bin/ddns" ]; then
 	rm "$GOPATH/bin/ddns"
 fi
@@ -21,5 +19,3 @@ if [ -a "$static" ]; then
 else 
 	ln -s $GOPATH/src/github.com/inimei/ddns/ddns_static $static
 fi
-
-$GOPATH/bin/ddns

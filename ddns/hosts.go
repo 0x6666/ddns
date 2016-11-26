@@ -10,35 +10,23 @@ import (
 
 	"github.com/fsnotify/fsnotify"
 
-	"github.com/hoisie/redis"
 	"github.com/inimei/backup/log"
 	"github.com/inimei/ddns/config"
 )
 
 type Hosts struct {
-	fileHosts  *FileHosts
-	redisHosts *RedisHosts
+	fileHosts *FileHosts
 
 	hostWatcher *fsnotify.Watcher
 }
 
-func NewHosts(hs config.HostsSettings, rs config.RedisSettings) Hosts {
+func NewHosts(hs config.HostsSettings) Hosts {
 	fileHosts := &FileHosts{
 		file:  hs.HostsFile,
 		hosts: make(map[string]string),
 	}
 
-	var redisHosts *RedisHosts
-	if hs.RedisEnable {
-		rc := &redis.Client{Addr: rs.Addr(), Db: rs.DB, Password: rs.Password}
-		redisHosts = &RedisHosts{
-			redis: rc,
-			key:   hs.RedisKey,
-			hosts: make(map[string]string),
-		}
-	}
-
-	hosts := Hosts{fileHosts, redisHosts, nil}
+	hosts := Hosts{fileHosts, nil}
 	hosts.refresh()
 	return hosts
 }
@@ -52,12 +40,7 @@ func (h *Hosts) Get(domain string, family int) ([]net.IP, bool) {
 	var ip net.IP
 	var ips []net.IP
 
-	sips, ok := h.fileHosts.Get(domain)
-	if !ok {
-		if h.redisHosts != nil {
-			sips, ok = h.redisHosts.Get(domain)
-		}
-	}
+	sips, _ = h.fileHosts.Get(domain)
 
 	if sips == nil {
 		return nil, false
@@ -103,9 +86,6 @@ func (h *Hosts) refresh() {
 				if event.Op&fsnotify.Write == fsnotify.Write {
 					log.Info("modified file: %v", event.Name)
 					h.fileHosts.Refresh()
-					if h.redisHosts != nil {
-						h.redisHosts.Refresh()
-					}
 				}
 			case err := <-h.hostWatcher.Errors:
 				log.Info("error:", err)
@@ -117,69 +97,6 @@ func (h *Hosts) refresh() {
 	if err != nil {
 		log.Error(err.Error())
 	}
-
-	//<-done
-	/*
-		ticker := time.NewTicker(h.refreshInterval)
-		go func() {
-			for {
-				h.fileHosts.Refresh()
-				if h.redisHosts != nil {
-					h.redisHosts.Refresh()
-				}
-				<-ticker.C
-			}
-		}()
-	*/
-}
-
-type RedisHosts struct {
-	redis *redis.Client
-	key   string
-	hosts map[string]string
-	mu    sync.RWMutex
-}
-
-func (r *RedisHosts) Get(domain string) ([]string, bool) {
-	domain = strings.ToLower(domain)
-	r.mu.RLock()
-	ip, ok := r.hosts[domain]
-	r.mu.RUnlock()
-	if ok {
-		return strings.Split(ip, ","), true
-	}
-
-	for host, ip := range r.hosts {
-		if strings.HasPrefix(host, "*.") {
-			upperLevelDomain := strings.Split(host, "*.")[1]
-			if strings.HasSuffix(domain, upperLevelDomain) {
-				return strings.Split(ip, ","), true
-			}
-		}
-	}
-	return nil, false
-}
-
-func (r *RedisHosts) Set(domain, ip string) (bool, error) {
-	r.mu.Lock()
-	defer r.mu.Unlock()
-	return r.redis.Hset(r.key, strings.ToLower(domain), []byte(ip))
-}
-
-func (r *RedisHosts) Refresh() {
-	r.mu.Lock()
-	defer r.mu.Unlock()
-	r.clear()
-	err := r.redis.Hgetall(r.key, r.hosts)
-	if err != nil {
-		log.Warn("Update hosts records from redis failed %s", err)
-	} else {
-		log.Debug("Update hosts records from redis")
-	}
-}
-
-func (r *RedisHosts) clear() {
-	r.hosts = make(map[string]string)
 }
 
 type FileHosts struct {

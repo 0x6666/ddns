@@ -58,14 +58,28 @@ func (ws *WebServer) loadTemplate() {
 func (ws *WebServer) regHandler() {
 	ws.h = &handler{ws: ws}
 
-	ws.e.GET(pRoot, ws.h.root)
+	ws.regWebHandler()
+	ws.regAPIHandler()
+}
 
-	ws.e.GET(pRecodes, ws.h.getRecodes)
-	ws.e.POST(pRecodes, ws.h.newRecode)
-	ws.e.GET(pRecode, ws.h.getRecode)
-	ws.e.POST(pRecode, ws.h.getRecode)
-	ws.e.PATCH(pRecode, ws.h.getRecode)
-	ws.e.DELETE(pRecode, ws.h.deleteRecode)
+func (ws *WebServer) regWebHandler() {
 
-	ws.e.POST(pUpdate, ws.h.updateRecode)
+	group := ws.e.Group("")
+	group.GET(pRoot, ws.h.root)
+
+	group.GET(pRecodes, ws.h.getRecodes)
+	group.POST(pRecodes, ws.h.newRecode)
+	group.GET(pRecode, ws.h.getRecode)
+	group.POST(pRecode, ws.h.getRecode)
+	group.PATCH(pRecode, ws.h.getRecode)
+	group.DELETE(pRecode, ws.h.deleteRecode)
+
+	group.POST(pUpdate, ws.h.updateRecode)
+}
+
+func (ws *WebServer) regAPIHandler() {
+	group := ws.e.Group("/api", ws.h.SignMiddleware)
+
+	group.GET("/recodes", ws.h.apiGetRecodes)
+
 }

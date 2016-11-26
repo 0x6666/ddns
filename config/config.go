@@ -5,7 +5,6 @@ import (
 	"io/ioutil"
 	"os"
 	"path/filepath"
-	"strconv"
 
 	"github.com/BurntSushi/toml"
 	"github.com/inimei/backup/log"
@@ -33,22 +32,9 @@ type ResolvSettings struct {
 }
 
 type HostsSettings struct {
-	Enable      bool
-	HostsFile   string `toml:"host-file"`
-	RedisEnable bool   `toml:"redis-enable"`
-	RedisKey    string `toml:"redis-key"`
-	TTL         uint32 `toml:"ttl"`
-}
-
-type RedisSettings struct {
-	Host     string
-	Port     int
-	DB       int
-	Password string
-}
-
-func (s RedisSettings) Addr() string {
-	return s.Host + ":" + strconv.Itoa(s.Port)
+	Enable    bool
+	HostsFile string `toml:"host-file"`
+	TTL       uint32 `toml:"ttl"`
 }
 
 type ServerSetting struct {
@@ -71,11 +57,9 @@ type cfgData struct {
 	Server ServerSetting  `toml:"server"`
 	Web    WebSetting     `toml:"web"`
 	Sqlite SqliteSetting  `toml:"sqlite"`
-	Sql    SqlConfig      `toml:"mysql"`
 	Cache  CacheSettings  `toml:"cache"`
 	Resolv ResolvSettings `toml:"resolv"`
 	Hosts  HostsSettings  `toml:"hosts"`
-	Redis  RedisSettings  `toml:"redis"`
 }
 
 var Data cfgData

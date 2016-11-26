@@ -74,7 +74,7 @@ func NewHandler(db data.IDatabase) *DDNSHandler {
 
 	var hosts Hosts
 	if config.Data.Hosts.Enable {
-		hosts = NewHosts(config.Data.Hosts, config.Data.Redis)
+		hosts = NewHosts(config.Data.Hosts)
 	}
 
 	var recodes *DBRecodes
