@@ -6,7 +6,30 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/inimei/backup/log"
+	"github.com/inimei/ddns/data/model"
 )
+
+// apiGetDataSchemaVersion -> [POST] :/api/schemaversion
+//
+// Ret Code:[200]
+//
+// 成功返回值
+//	{
+//		"code": "OK",
+//		"version": "0.1"
+//	}
+//
+// 失败返回值
+//	code: xxx
+//
+func (h *handler) apiGetDataSchemaVersion(c *gin.Context) {
+
+	res := map[string]interface{}{}
+	res["code"] = CodeOK
+	res["version"] = model.CurrentVersion
+
+	c.JSON(http.StatusOK, res)
+}
 
 // apiGetRecodes -> [POST] :/api/recodes
 //

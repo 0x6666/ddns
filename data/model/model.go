@@ -5,6 +5,8 @@ import (
 	"time"
 )
 
+const CurrentVersion = "0.1"
+
 type Model struct {
 	ID        int64 `gorm:"primary_key"`
 	CreatedAt time.Time
