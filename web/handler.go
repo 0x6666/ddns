@@ -67,7 +67,10 @@ func createRecodeFromForm(c *gin.Context) *model.Recode {
 	r.RecordName = c.PostForm("name")
 	r.RecodeValue = c.PostForm("value")
 	r.RecordType = 1
-	r.Dynamic = true
+	if len(r.RecodeValue) == 0 {
+		r.Dynamic = true
+	}
+
 	r.TTL, _ = strconv.Atoi(c.DefaultPostForm("ttl", "600"))
 	if r.TTL == 0 {
 		r.TTL = 600
