@@ -35,7 +35,6 @@ func NewHosts(hs config.HostsSettings) Hosts {
 func (h *Hosts) Get(domain string, qtype uint16) ([]net.IP, bool) {
 
 	var sips []string
-	var ip net.IP
 	var ips []net.IP
 
 	sips, _ = h.fileHosts.Get(domain)

@@ -11,6 +11,8 @@ import (
 
 	"fmt"
 
+	"sync"
+
 	"github.com/inimei/backup/log"
 	"github.com/inimei/ddns/config"
 	"github.com/inimei/ddns/data"
@@ -22,6 +24,9 @@ import (
 
 type SlaveServer struct {
 	db data.IDatabase
+
+	sync.RWMutex
+	updating bool
 }
 
 type recode struct {
@@ -52,21 +57,45 @@ func (ss *SlaveServer) Init(db data.IDatabase) error {
 	}
 
 	ss.db = db
+	ss.updating = false
 
 	return nil
 }
 
+func (ss *SlaveServer) IsUpdating() bool {
+	ss.RLock()
+	defer ss.RUnlock()
+	return ss.updating
+}
+
+func (ss *SlaveServer) setStatus(b bool) {
+	ss.Lock()
+	defer ss.Unlock()
+	ss.updating = b
+}
+
 func (ss *SlaveServer) Start() {
 	ticker := time.NewTicker(time.Second * time.Duration(config.Data.Slave.UpdateTime))
+
+	go ss.checkUpdate(true)
+
 	go func() {
 		for {
-			ss.checkUpdate()
+			ss.checkUpdate(false)
 			<-ticker.C
 		}
 	}()
 }
 
-func (ss *SlaveServer) checkUpdate() {
+func (ss *SlaveServer) checkUpdate(force bool) {
+
+	if ss.IsUpdating() {
+		return
+	}
+
+	ss.setStatus(true)
+	defer ss.setStatus(false)
+
 	v, err := ss.getVersion()
 	if err != nil {
 		log.Error(err.Error())
@@ -78,7 +107,7 @@ func (ss *SlaveServer) checkUpdate() {
 		return
 	}
 
-	if v.DataVersion == ss.db.GetVersion() {
+	if !force && v.DataVersion == ss.db.GetVersion() {
 		log.Debug("the same data version....")
 		return
 	}
