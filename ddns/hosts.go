@@ -9,6 +9,7 @@ import (
 	"sync"
 
 	"github.com/fsnotify/fsnotify"
+	"github.com/miekg/dns"
 
 	"github.com/inimei/backup/log"
 	"github.com/inimei/ddns/config"
@@ -31,10 +32,7 @@ func NewHosts(hs config.HostsSettings) Hosts {
 	return hosts
 }
 
-/*
-Match local /etc/hosts file first, remote redis records second
-*/
-func (h *Hosts) Get(domain string, family int) ([]net.IP, bool) {
+func (h *Hosts) Get(domain string, qtype uint16) ([]net.IP, bool) {
 
 	var sips []string
 	var ip net.IP
@@ -47,13 +45,19 @@ func (h *Hosts) Get(domain string, family int) ([]net.IP, bool) {
 	}
 
 	for _, sip := range sips {
-		switch family {
-		case _IP4Query:
-			ip = net.ParseIP(sip).To4()
-		case _IP6Query:
-			ip = net.ParseIP(sip).To16()
-		default:
-			continue
+		var ip net.IP = net.ParseIP(sip)
+		switch {
+		case ip == nil:
+			log.Error("invalid ip address [%v]", sip)
+			return []net.IP{ip}, true
+		case qtype == dns.TypeA:
+			ip = ip.To4()
+		case qtype == dns.TypeAAAA:
+			if ip.To4() == nil {
+				ip = ip.To16()
+			} else {
+				ip = nil
+			}
 		}
 		if ip != nil {
 			ips = append(ips, ip)
@@ -63,9 +67,6 @@ func (h *Hosts) Get(domain string, family int) ([]net.IP, bool) {
 	return ips, (ips != nil)
 }
 
-/*
-Update hosts records from /etc/hosts file and redis per minute
-*/
 func (h *Hosts) refresh() {
 	if h.hostWatcher != nil {
 		return
@@ -77,7 +78,6 @@ func (h *Hosts) refresh() {
 		log.Error(err.Error())
 	}
 
-	//done := make(chan bool)
 	go func() {
 		for {
 			select {

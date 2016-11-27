@@ -10,6 +10,7 @@ import (
 
 	"github.com/inimei/backup/log"
 	"github.com/inimei/ddns/data"
+	"github.com/miekg/dns"
 )
 
 type recode struct {
@@ -32,27 +33,42 @@ func NewDBRecodes(db data.IDatabase) *DBRecodes {
 
 	dr := &DBRecodes{db: db}
 	dr.cache = map[string]recode{}
+	dr.cacheVersion = -1
+	go func() { dr.update() }()
 	dr.refresh()
 	return dr
 }
 
-func (d *DBRecodes) Get(domain string, family int) ([]net.IP, int, bool) {
+func (d *DBRecodes) Get(domain string, qtype uint16) ([]net.IP, int, bool) {
+
+	if qtype != dns.TypeA && qtype != dns.TypeAAAA {
+		log.Debug("not implement for %v", dns.TypeToString[qtype])
+		return nil, 0, false
+	}
 
 	d.RLock()
 	defer d.RUnlock()
 
 	dm := strings.ToLower(domain)
 	if r, exist := d.cache[dm]; exist {
-		var ip net.IP
-		switch family {
-		case _IP4Query:
-			ip = net.ParseIP(r.ip).To4()
-		case _IP6Query:
-			ip = net.ParseIP(r.ip).To16()
-
+		var ip net.IP = net.ParseIP(r.ip)
+		switch {
+		case ip == nil:
+			log.Error("invalid ip address [%v]", r.ip)
+			return []net.IP{ip}, r.ttl, true
+		case qtype == dns.TypeA:
+			ip = ip.To4()
+		case qtype == dns.TypeAAAA:
+			if ip.To4() == nil {
+				ip = ip.To16()
+			} else {
+				ip = nil
+			}
 		}
 
-		return []net.IP{ip}, r.ttl, true
+		if ip != nil {
+			return []net.IP{ip}, r.ttl, true
+		}
 	}
 	return nil, 0, false
 }

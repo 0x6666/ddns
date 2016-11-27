@@ -11,6 +11,13 @@ import (
 	"github.com/miekg/dns"
 )
 
+type NetType int
+
+const (
+	NetTCP NetType = 1
+	NetUDP         = 2
+)
+
 const (
 	notIPQuery = 0
 	_IP4Query  = 4
@@ -91,12 +98,13 @@ func (h *DDNSHandler) close() {
 	}
 }
 
-func (h *DDNSHandler) do(Net string, w dns.ResponseWriter, req *dns.Msg) {
+func (h *DDNSHandler) do(netType NetType, w dns.ResponseWriter, req *dns.Msg) {
+
 	q := req.Question[0]
 	Q := Question{UnFqdn(q.Name), dns.TypeToString[q.Qtype], dns.ClassToString[q.Qclass]}
 
 	var remote net.IP
-	if Net == "tcp" {
+	if netType == NetTCP {
 		remote = w.RemoteAddr().(*net.TCPAddr).IP
 	} else {
 		remote = w.RemoteAddr().(*net.UDPAddr).IP
@@ -141,26 +149,29 @@ func (h *DDNSHandler) do(Net string, w dns.ResponseWriter, req *dns.Msg) {
 	//	query in database
 	//
 	if h.dbrecodes != nil {
-		if ips, ttl, ok := h.dbrecodes.Get(Q.qname, IPQuery); ok {
+		if ips, ttl, ok := h.dbrecodes.Get(Q.qname, q.Qtype); ok {
 			rspByIps(ips, uint32(ttl))
-			log.Debug("%s found in database", Q.qname)
+			log.Debug("%s found in database", Q.String())
 			return
 		}
-		log.Debug("%s didn't found in database", Q.qname)
+		log.Debug("%s didn't found in database", Q.String())
 	}
 
+	//
+	//	query in host file
+	//
 	if config.Data.Hosts.Enable && IPQuery > 0 {
-		if ips, ok := h.hosts.Get(Q.qname, IPQuery); ok {
+		if ips, ok := h.hosts.Get(Q.qname, q.Qtype); ok {
 			rspByIps(ips, config.Data.Hosts.TTL)
-			log.Debug("%s found in hosts file", Q.qname)
+			log.Debug("%s found in hosts file", Q.String())
 			return
 		}
-		log.Debug("%s didn't found in hosts file", Q.qname)
+		log.Debug("%s didn't found in hosts file", Q.String())
 	}
 
 	//
 	// query in cache
-	// Only query cache when qtype == 'A'|'AAAA' , qclass == 'IN'
+	//
 	key := KeyGen(Q)
 	if IPQuery > 0 {
 		mesg, err := h.cache.Get(key)
@@ -182,12 +193,15 @@ func (h *DDNSHandler) do(Net string, w dns.ResponseWriter, req *dns.Msg) {
 		}
 	}
 
+	//
+	//	external resolution
+	//
 	var err error
 	var mesg *dns.Msg
 	if config.Data.Resolv.Enable {
-		mesg, err = h.resolver.Lookup(Net, req)
+		mesg, err = h.resolver.Lookup(netType, req)
 	} else {
-		err = errors.New("Local resolution failed with no external resolution")
+		err = errors.New("no external resolution")
 	}
 
 	if err != nil {
@@ -213,11 +227,11 @@ func (h *DDNSHandler) do(Net string, w dns.ResponseWriter, req *dns.Msg) {
 }
 
 func (h *DDNSHandler) DoTCP(w dns.ResponseWriter, req *dns.Msg) {
-	h.do("tcp", w, req)
+	h.do(NetTCP, w, req)
 }
 
 func (h *DDNSHandler) DoUDP(w dns.ResponseWriter, req *dns.Msg) {
-	h.do("udp", w, req)
+	h.do(NetUDP, w, req)
 }
 
 func (h *DDNSHandler) isIPQuery(q dns.Question) int {

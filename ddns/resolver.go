@@ -28,7 +28,12 @@ type Resolver struct {
 // Lookup will ask each nameserver in top-to-bottom fashion, starting a new request
 // in every second, and return as early as possbile (have an answer).
 // It returns an error if no request has succeeded.
-func (r *Resolver) Lookup(net string, req *dns.Msg) (message *dns.Msg, err error) {
+func (r *Resolver) Lookup(netType NetType, req *dns.Msg) (message *dns.Msg, err error) {
+	net := "tcp"
+	if netType == NetUDP {
+		net = "udp"
+	}
+
 	c := &dns.Client{
 		Net:          net,
 		ReadTimeout:  r.Timeout(),

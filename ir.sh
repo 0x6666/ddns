@@ -3,5 +3,4 @@
 set -e
 
 ./install.sh
-
-$GOPATH/bin/ddns
+./run.sh
