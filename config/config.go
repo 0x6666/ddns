@@ -47,7 +47,9 @@ type SlaveSetting struct {
 }
 
 type WebSetting struct {
-	Port int `toml:"port"`
+	Port   int    `toml:"port"`
+	Admin  string `toml:"admin"`
+	Passwd string `toml:"passwd"`
 }
 
 type SqliteSetting struct {

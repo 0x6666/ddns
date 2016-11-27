@@ -1,10 +1,12 @@
 package web
 
 import (
+	"net/http"
 	"strings"
 
 	"github.com/gin-gonic/gin"
 	"github.com/inimei/backup/log"
+	"github.com/inimei/ddns/web/sessions"
 	"github.com/inimei/ddns/web/signature"
 )
 
@@ -46,5 +48,15 @@ func (h *handler) SignMiddleware(c *gin.Context) {
 	}
 
 	c.Set("secretKey", secretKey)
+	c.Next()
+}
+
+func (h *handler) CookieAuthMiddleware(c *gin.Context) {
+
+	if !sessions.IsLogined(c.Request) {
+		c.Redirect(http.StatusTemporaryRedirect, "/login")
+		c.Abort()
+	}
+
 	c.Next()
 }

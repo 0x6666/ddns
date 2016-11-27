@@ -28,7 +28,7 @@ func (ws *WebServer) Start(db data.IDatabase) {
 	curPath := config.CurDir()
 	curPath += "/ddns_static"
 
-	ws.e.Static("/html", curPath+"/html")
+	ws.e.Static("/login", curPath+"/login")
 	ws.e.Static("/css", curPath+"/css")
 	ws.e.Static("/js", curPath+"/js")
 	ws.e.Static("/vendors", curPath+"/vendors")
@@ -65,15 +65,20 @@ func (ws *WebServer) regHandler() {
 func (ws *WebServer) regWebHandler() {
 
 	group := ws.e.Group("")
-	group.GET(pRoot, ws.h.root)
 
-	group.GET(pRecodes, ws.h.getRecodes)
-	group.POST(pRecodes, ws.h.newRecode)
-	group.GET(pRecode, ws.h.getRecode)
-	group.POST(pRecode, ws.h.getRecode)
-	group.PATCH(pRecode, ws.h.getRecode)
-	group.DELETE(pRecode, ws.h.deleteRecode)
+	group.POST(pLogin, ws.h.login)
 
+	auth := group.Group("", ws.h.CookieAuthMiddleware)
+
+	auth.GET(pRoot, ws.h.root)
+	auth.GET(pRecodes, ws.h.getRecodes)
+	auth.POST(pRecodes, ws.h.newRecode)
+	auth.GET(pRecode, ws.h.getRecode)
+	auth.POST(pRecode, ws.h.getRecode)
+	auth.PATCH(pRecode, ws.h.getRecode)
+	auth.DELETE(pRecode, ws.h.deleteRecode)
+
+	//TODO: api
 	group.POST(pUpdate, ws.h.updateRecode)
 }
 

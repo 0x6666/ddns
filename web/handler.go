@@ -1,6 +1,7 @@
 package web
 
 import (
+	"crypto/sha1"
 	"net"
 	"net/http"
 	"strings"
@@ -12,8 +13,10 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
 	"github.com/inimei/backup/log"
+	"github.com/inimei/ddns/config"
 	"github.com/inimei/ddns/data/model"
 	"github.com/inimei/ddns/errs"
+	"github.com/inimei/ddns/web/sessions"
 )
 
 const (
@@ -21,6 +24,7 @@ const (
 
 	pRecodes = "/recodes"
 	pRecode  = "/recode/:id"
+	pLogin   = "/login"
 
 	pUpdate = "/update"
 )
@@ -48,6 +52,8 @@ const (
 	CodeAuthorizationError = "AuthorizationError"
 	CodeVerifySignature    = "VerifySignature"
 	CodeGetSecretKeyError  = "GetSecretKeyError"
+	CodeUserNameError      = "UserNameError"
+	CodePasswordError      = "PasswordError"
 )
 
 func requestType(r *http.Request) string {
@@ -129,6 +135,37 @@ func (h *handler) getRecodeFromParam(c *gin.Context) (*model.Recode, error) {
 		return nil, errs.ErrInvalidParam
 	}
 	return r, err
+}
+
+// login -> [POST] :/login?to=xxxx
+//
+// Ret Code:[200]
+//
+// 成功返回值
+//	{
+//		"code": "OK"
+//	}
+//
+// 失败返回值
+//		code: xxx
+//
+func (h *handler) login(c *gin.Context) {
+	username := c.PostForm("username")
+	password := c.PostForm("password")
+
+	if username != config.Data.Web.Admin {
+		h.rspErrorCode(c, CodeUserNameError, "username error")
+		return
+	}
+
+	if fmt.Sprintf("%x", sha1.Sum([]byte(password))) != config.Data.Web.Passwd {
+		h.rspErrorCode(c, CodePasswordError, "password error")
+		return
+	}
+
+	sessions.Login(c.Writer, c.Request, username)
+
+	h.rspOk(c)
 }
 
 // getRecode -> [POST] :/recodes

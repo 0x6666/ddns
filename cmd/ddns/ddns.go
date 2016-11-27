@@ -51,6 +51,12 @@ func main() {
 
 	var ws *web.WebServer
 	if config.Data.Server.EnableWeb {
+
+		if config.Data.Web.Admin == "" || config.Data.Web.Passwd == "" {
+			log.Error("web admin $ passwd can't be empty")
+			return
+		}
+
 		ws = &web.WebServer{}
 		ws.Start(db)
 	}
