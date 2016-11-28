@@ -1,6 +1,7 @@
 package web
 
 import (
+	"net"
 	"net/http"
 	"strconv"
 
@@ -93,4 +94,59 @@ func (h *handler) apiGetRecodes(c *gin.Context) {
 	res["recodes"] = dastamap
 
 	c.JSON(http.StatusOK, res)
+}
+
+// apiUpdateRecode -> [POST] :/api/update
+//
+// Ret Code:[200]
+//
+// 更新一个记录
+//
+// 成功返回值
+// 	{
+//		"result": "ok"
+//	}
+//
+// 失败返回值
+//	{
+//		"result": "xxx"
+//	}
+//
+func (h *handler) apiUpdateRecode(c *gin.Context) {
+
+	key := c.PostForm("key")
+	if len(key) == 0 {
+		h.rspErrorCode(c, CodeKeyIsEmpty, "key is empty")
+		return
+	}
+
+	ip := c.PostForm("ip")
+	if len(ip) != 0 {
+		if i := net.ParseIP(ip); i == nil {
+			h.rspErrorCode(c, CodeInvalidIP, "invalid ip address")
+			return
+		}
+	}
+
+	recode, err := h.ws.db.FindByKey(key)
+	if err != nil {
+		log.Error(err.Error())
+		h.rspError(c, err)
+		return
+	}
+
+	if recode.RecodeValue == ip {
+		h.rspOk(c)
+		return
+	}
+
+	recode.RecodeValue = ip
+	err = h.ws.db.UpdateRecode(recode)
+	if err != nil {
+		log.Error(err.Error())
+		h.rspError(c, err)
+		return
+	}
+
+	h.rspOk(c)
 }

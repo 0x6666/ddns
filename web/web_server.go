@@ -77,9 +77,6 @@ func (ws *WebServer) regWebHandler() {
 	auth.POST(pRecode, ws.h.getRecode)
 	auth.PATCH(pRecode, ws.h.getRecode)
 	auth.DELETE(pRecode, ws.h.deleteRecode)
-
-	//TODO: api
-	group.POST(pUpdate, ws.h.updateRecode)
 }
 
 func (ws *WebServer) regAPIHandler() {
@@ -87,4 +84,5 @@ func (ws *WebServer) regAPIHandler() {
 
 	group.GET("/recodes", ws.h.apiGetRecodes)
 	group.GET("/dataversion", ws.h.apiGetDataSchemaVersion)
+	group.POST("/update", ws.h.apiUpdateRecode)
 }
