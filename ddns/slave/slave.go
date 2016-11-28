@@ -178,7 +178,7 @@ func (ss *SlaveServer) getRecodes() ([]recode, error) {
 		log.Error(err.Error())
 		return nil, err
 	}
-	signature.SignRequest(req, url, config.Data.Slave.Accesskey, config.Data.Slave.SecretKey)
+	signature.SignRequest(req, url, config.Data.Slave.Accesskey, config.Data.Slave.SecretKey, "application/json")
 
 	resp, err := client.Do(req)
 	if err != nil {
@@ -222,14 +222,14 @@ func (ss *SlaveServer) getVersion() (*model.Version, error) {
 	req, err := http.NewRequest("GET", config.Data.Slave.MasterHost+url, strings.NewReader(""))
 	if err != nil {
 		log.Error(err.Error())
-		return nil, nil
+		return nil, err
 	}
-	signature.SignRequest(req, url, config.Data.Slave.Accesskey, config.Data.Slave.SecretKey)
+	signature.SignRequest(req, url, config.Data.Slave.Accesskey, config.Data.Slave.SecretKey, "application/json")
 
 	resp, err := client.Do(req)
 	if err != nil {
 		log.Error(err.Error())
-		return nil, nil
+		return nil, err
 	}
 	defer resp.Body.Close()
 	bodyData, err := ioutil.ReadAll(resp.Body)

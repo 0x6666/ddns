@@ -8,6 +8,7 @@ import (
 	"io"
 	"io/ioutil"
 	"net/http"
+	"net/url"
 	"strings"
 	"time"
 
@@ -17,7 +18,7 @@ import (
 //map[accessID]secretKey
 var secretKeyMap map[string]string
 
-var acceptableContentTypes = []string{"application/json"}
+var acceptableContentTypes = []string{"application/json", "application/x-www-form-urlencoded"}
 
 const maxBodyLength int64 = 1024 //1k
 
@@ -94,6 +95,13 @@ func VerifySignature(authType, accessID, sig string, r *http.Request, w http.Res
 				log.Debug("http read body failed, %v", err)
 				return err
 			}
+
+			if r.PostForm == nil {
+				if r.Method == "POST" || r.Method == "PUT" || r.Method == "PATCH" {
+					r.PostForm, err = url.ParseQuery(string(content))
+				}
+			}
+
 		} else {
 			log.Warn("r.Body == nil && r.ContentLenght > 0....????")
 		}
@@ -122,12 +130,12 @@ func VerifySignature(authType, accessID, sig string, r *http.Request, w http.Res
 	return nil
 }
 
-func SignRequest(req *http.Request, url, accessID, secretKey string) {
-	md5 := getMd5([]byte(url))
+func SignRequest(req *http.Request, data, accessID, secretKey, ctType string) {
+	md5 := getMd5([]byte(data))
 	req.Header.Set("Content-Md5", md5)
 	date := time.Now().Format("Mon, 2 Jan 2006 15:04:05 GMT")
 	req.Header.Set("Date", date)
-	ctType := "application/json"
+	// ctType:= "application/json"
 	req.Header.Set("Content-Type", ctType)
 
 	sig := sign(md5, ctType, date, secretKey)
