@@ -98,6 +98,9 @@ func newHandler(ws *WebServer) *handler {
 	} else {
 		h.envData["Production"] = true
 	}
+
+	h.envData["AssetsHost"] = config.Data.Web.AssetsImageHost
+
 	return h
 }
 

@@ -1,6 +1,6 @@
 
 [server]
-debug=true
+debug=false
 addr=""
 port=53
 enableweb=true
@@ -8,15 +8,16 @@ enabledns=false
 master=true
 
 [slave]
-master_host=""
+master_host="http://jp.yangsong.site"
 accesskey=""
 secretKey=""
 update_time=300  #seconds
 
 [web]
 port=22280
-admin=""
-passwd=""  #sha1
+admin="yangsong@yangsong.site"
+passwd="94f717fb79f5ea8b5dff0affbbdfdacd8335fbc2"  #sha1
+assets_image_host="https://ohgdnd9lh.qnssl.com"
 
 [sqlite]
 path="data.db"

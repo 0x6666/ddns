@@ -1,7 +1,7 @@
-/ddns_static/vendors/bootstrap-table-1.11.0/extensions/*
-!/ddns_static/vendors/bootstrap-table-1.11.0/extensions/export
-!/ddns_static/vendors/bootstrap-table-1.11.0/extensions/editable
-/ddns_static/vendors/bootstrap-table-1.11.0/locale
+/ddns_static/assets/vendors/bootstrap-table-1.11.0/extensions/*
+!/ddns_static/assets/vendors/bootstrap-table-1.11.0/extensions/export
+!/ddns_static/assets/vendors/bootstrap-table-1.11.0/extensions/editable
+/ddns_static/assets/vendors/bootstrap-table-1.11.0/locale
 /ddns.cprof
 /ddns.mprof
 /ddns_static/bootstrap-login-forms

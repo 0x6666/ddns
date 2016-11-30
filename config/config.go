@@ -47,9 +47,10 @@ type SlaveSetting struct {
 }
 
 type WebSetting struct {
-	Port   int    `toml:"port"`
-	Admin  string `toml:"admin"`
-	Passwd string `toml:"passwd"`
+	Port            int    `toml:"port"`
+	Admin           string `toml:"admin"`
+	Passwd          string `toml:"passwd"`
+	AssetsImageHost string `toml:"assets_image_host"`
 }
 
 type SqliteSetting struct {
@@ -99,6 +100,10 @@ func initialize(configFilePath string) error {
 		if Data.Slave.UpdateTime == 0 {
 			Data.Slave.UpdateTime = 300
 		}
+	}
+
+	if strings.HasSuffix(Data.Web.AssetsImageHost, "/") {
+		Data.Web.AssetsImageHost = strings.TrimSuffix(Data.Web.AssetsImageHost, "/")
 	}
 
 	return nil

@@ -29,10 +29,7 @@ func (ws *WebServer) Start(db data.IDatabase) {
 	curPath += "/ddns_static"
 
 	ws.e.Static("/login", curPath+"/login")
-	ws.e.Static("/css", curPath+"/css")
-	ws.e.Static("/js", curPath+"/js")
-	ws.e.Static("/fonts", curPath+"/fonts")
-	ws.e.Static("/vendors", curPath+"/vendors")
+	ws.e.Static("/assets", curPath+"/assets")
 
 	ws.loadTemplate()
 	ws.regHandler()
