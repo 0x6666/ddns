@@ -156,6 +156,17 @@ func (h *handler) getRecodeFromParam(c *gin.Context) (*model.Recode, error) {
 	return r, err
 }
 
+// getLogin -> [GET] :/login
+//
+// Ret Code:[200]
+//
+//
+func (h *handler) getLogin(c *gin.Context) {
+	parameters := h.getTemplateParameter(c)
+	c.HTML(http.StatusOK, "login.html", parameters)
+	return
+}
+
 // login -> [POST] :/login?to=xxxx
 //
 // Ret Code:[200]
