@@ -300,7 +300,8 @@ function on_init_recode_lists() {
 	function getHeight() {
 		return $(window).height() - $('h1').outerHeight(true);
 	}
-	$(function () {
+	initTable();
+	/*$(function () {
 		var scripts = [
 			location.search.substring(1) ||
 			'/vendors/bootstrap-table-1.11.0/extensions/export/bootstrap-table-export.js',
@@ -310,5 +311,5 @@ function on_init_recode_lists() {
 		];
 
 		load_series(scripts, initTable);
-	});
+	});*/
 }

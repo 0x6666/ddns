@@ -85,7 +85,20 @@ func createRecodeFromForm(c *gin.Context) *model.Recode {
 }
 
 type handler struct {
-	ws *WebServer
+	ws      *WebServer
+	envData map[string]interface{}
+}
+
+func newHandler(ws *WebServer) *handler {
+	h := &handler{ws: ws}
+
+	h.envData = map[string]interface{}{}
+	if gin.IsDebugging() {
+		h.envData["Debug"] = true
+	} else {
+		h.envData["Production"] = true
+	}
+	return h
 }
 
 func (h *handler) rspOk(c *gin.Context) {
@@ -109,7 +122,11 @@ func (h *handler) rspErrorCode(c *gin.Context, code, msg string) {
 }
 
 func (h *handler) getTemplateParameter(c *gin.Context) map[string]interface{} {
-	return map[string]interface{}{}
+
+	parameters := map[string]interface{}{}
+	parameters["Env"] = h.envData
+
+	return parameters
 }
 
 func (h *handler) root(c *gin.Context) {

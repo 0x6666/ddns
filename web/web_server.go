@@ -57,7 +57,7 @@ func (ws *WebServer) loadTemplate() {
 }
 
 func (ws *WebServer) regHandler() {
-	ws.h = &handler{ws: ws}
+	ws.h = newHandler(ws)
 
 	ws.regWebHandler()
 	ws.regAPIHandler()
