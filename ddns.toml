@@ -28,8 +28,8 @@ expire = 600  # default expire time 10 minutes
 maxcount = 100000
 
 [resolv]
-enable = false
-resolv-file="/etc/resolv.conf"
+enable = true
+resolv-file="resolv.conf"
 timeout = 5  # 5 seconds
 interval = 200 # 200 milliseconds
 

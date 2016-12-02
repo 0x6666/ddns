@@ -15,3 +15,8 @@ static=$GOPATH/bin/ddns_static
 if [ ! -d $static ]; then
 	ln -s $GOPATH/src/github.com/inimei/ddns/ddns_static $static
 fi
+
+cfg=$GOPATH/bin/resolv.conf
+if [ ! -f $cfg ]; then
+	ln -s $GOPATH/src/github.com/inimei/ddns/resolv.conf $cfg
+fi

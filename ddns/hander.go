@@ -51,9 +51,14 @@ func NewHandler(db data.IDatabase) *DDNSHandler {
 
 	if config.Data.Resolv.Enable {
 		resolvConfig := config.Data.Resolv
-		clientConfig, err := dns.ClientConfigFromFile(resolvConfig.ResolvFile)
+		path := resolvConfig.ResolvFile
+		if path[0] != '/' {
+			path = config.CurDir() + "/" + path
+		}
+
+		clientConfig, err := dns.ClientConfigFromFile(path)
 		if err != nil {
-			log.Warn(":%s is not a valid resolv.conf file\n", resolvConfig.ResolvFile)
+			log.Warn(":%s is not a valid resolv.conf file\n", path)
 			log.Error("%v", err)
 			panic(err)
 		}
