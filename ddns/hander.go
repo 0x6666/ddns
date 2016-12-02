@@ -107,6 +107,8 @@ func (h *DDNSHandler) do(netType NetType, w dns.ResponseWriter, req *dns.Msg) {
 
 	q := req.Question[0]
 	if q.Qtype == dns.TypeANY {
+		m := new(dns.Msg)
+		m.SetReply(req)
 		m.Authoritative = false
 		m.Rcode = dns.RcodeRefused
 		m.RecursionAvailable = false
