@@ -106,6 +106,16 @@ func (h *DDNSHandler) close() {
 func (h *DDNSHandler) do(netType NetType, w dns.ResponseWriter, req *dns.Msg) {
 
 	q := req.Question[0]
+	if q.Qtype == dns.TypeANY {
+		m.Authoritative = false
+		m.Rcode = dns.RcodeRefused
+		m.RecursionAvailable = false
+		m.RecursionDesired = false
+		m.Compress = false
+		w.WriteMsg(m)
+		return
+	}
+
 	Q := Question{UnFqdn(q.Name), dns.TypeToString[q.Qtype], dns.ClassToString[q.Qclass]}
 
 	var remote net.IP
@@ -121,6 +131,7 @@ func (h *DDNSHandler) do(netType NetType, w dns.ResponseWriter, req *dns.Msg) {
 	rspByIps := func(ips []net.IP, ttl uint32) {
 		m := new(dns.Msg)
 		m.SetReply(req)
+		m.RecursionAvailable = true
 
 		switch IPQuery {
 		case _IP4Query:
