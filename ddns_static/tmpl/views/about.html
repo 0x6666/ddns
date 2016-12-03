@@ -1,0 +1,23 @@
+{{define "view_about"}}
+<iframe height="560px"
+	width="585px"
+	onload="javascript:SetWinHeight(this)"
+	id="charimage"
+	frameborder="0"
+	scrolling="no"
+	src="{{.Env.AssetsHost}}/assets/html/tt.html">
+</iframe>
+
+<script>
+function SetWinHeight(win) {
+	if (document.getElementById) {
+		if (win && !window.opera) {
+			if (win.contentDocument && win.contentDocument.body.offsetHeight)
+				win.height = win.contentDocument.body.offsetHeight;
+			else if(win.Document && win.Document.body.scrollHeight)
+				win.height = win.Document.body.scrollHeight; 
+		}
+	}
+}
+</script>
+{{end}}

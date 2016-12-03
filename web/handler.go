@@ -24,6 +24,7 @@ const (
 	pRecodes = "/recodes"
 	pRecode  = "/recode/:id"
 	pLogin   = "/login"
+	pAbout   = "/about"
 
 	pUpdate = "/update"
 )
@@ -164,6 +165,18 @@ func (h *handler) getRecodeFromParam(c *gin.Context) (*model.Recode, error) {
 func (h *handler) getLogin(c *gin.Context) {
 	parameters := h.getTemplateParameter(c)
 	c.HTML(http.StatusOK, "login.html", parameters)
+	return
+}
+
+// getAbout -> [GET] :/about
+//
+// Ret Code:[200]
+//
+//
+func (h *handler) getAbout(c *gin.Context) {
+	parameters := h.getTemplateParameter(c)
+	parameters["View"] = "view_about"
+	c.HTML(http.StatusOK, "app_layout.html", parameters)
 	return
 }
 
