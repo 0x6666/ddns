@@ -14,7 +14,7 @@ var gulp = require('gulp'),
 //	revDel = require('rev-del');
 
 var jsSrc = './script/js/**/*.js',
-	cssSrc = './script/css/**/*.css',
+	cssSrc = './script/css/**/*.scss',
 	htmlSrc = './script/tmpl/**/*.html',
 	destJsDir = './assets/js',
 	destCssDir = './assets/css',

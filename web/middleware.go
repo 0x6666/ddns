@@ -54,8 +54,14 @@ func (h *handler) SignMiddleware(c *gin.Context) {
 func (h *handler) CookieAuthMiddleware(c *gin.Context) {
 
 	if !sessions.IsLogined(c.Request) {
+		if strings.ToLower(c.Request.Header.Get("DDNS-View")) == "true" {
+			c.JSON(http.StatusUnauthorized, "")
+			c.Abort()
+			return
+		}
 		c.Redirect(http.StatusTemporaryRedirect, "/login")
 		c.Abort()
+		return
 	}
 
 	c.Next()

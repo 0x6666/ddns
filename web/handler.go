@@ -129,8 +129,17 @@ func (h *handler) getTemplateParameter(c *gin.Context) map[string]interface{} {
 
 	parameters := map[string]interface{}{}
 	parameters["Env"] = h.envData
+	parameters["Layout"] = "app_layout.html"
+
+	if strings.ToLower(c.Request.Header.Get("DDNS-View")) == "true" {
+		parameters["Layout"] = "app_view.html"
+	}
 
 	return parameters
+}
+
+func (h *handler) HTML(c *gin.Context, code int, params map[string]interface{}) {
+	c.HTML(code, fmt.Sprintf("%v", params["Layout"]), params)
 }
 
 func (h *handler) root(c *gin.Context) {
@@ -176,7 +185,7 @@ func (h *handler) getLogin(c *gin.Context) {
 func (h *handler) getAbout(c *gin.Context) {
 	parameters := h.getTemplateParameter(c)
 	parameters["View"] = "view_about"
-	c.HTML(http.StatusOK, "app_layout.html", parameters)
+	h.HTML(c, http.StatusOK, parameters)
 	return
 }
 
@@ -240,7 +249,7 @@ func (h *handler) getRecodes(c *gin.Context) {
 	if t := requestType(c.Request); t != MIMEJSON {
 		parameters := h.getTemplateParameter(c)
 		parameters["View"] = "recode_list"
-		c.HTML(http.StatusOK, "app_layout.html", parameters)
+		h.HTML(c, http.StatusOK, parameters)
 		return
 	}
 
