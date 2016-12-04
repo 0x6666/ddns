@@ -170,8 +170,12 @@ func (h *handler) getRecodeFromParam(c *gin.Context) (*model.Recode, error) {
 //
 // Ret Code:[200]
 //
-//
 func (h *handler) getLogin(c *gin.Context) {
+	if sessions.IsLogined(c.Request) {
+		c.Redirect(http.StatusPermanentRedirect, pRoot)
+		return
+	}
+
 	parameters := h.getTemplateParameter(c)
 	c.HTML(http.StatusOK, "login.html", parameters)
 	return
