@@ -109,7 +109,7 @@ img { max-width: 100%; }
 
 .form-top {
 	overflow: hidden;
-	padding: 0 25px 15px 25px;
+	padding: 0 25px 0px 25px;
 	background: #444;
 	background: rgba(0, 0, 0, 0.35);
 	-moz-border-radius: 4px 4px 0 0; -webkit-border-radius: 4px 4px 0 0; border-radius: 4px 4px 0 0;
@@ -131,13 +131,13 @@ img { max-width: 100%; }
 	padding-top: 5px;
 	font-size: 66px;
 	color: #fff;
-	line-height: 100px;
+	line-height: 60px;
 	text-align: right;
 	opacity: 0.3;
 }
 
 .form-bottom {
-	padding: 25px 25px 30px 25px;
+	padding: 25px;
 	background: #444;
 	background: rgba(0, 0, 0, 0.3);
 	-moz-border-radius: 0 0 4px 4px; -webkit-border-radius: 0 0 4px 4px; border-radius: 0 0 4px 4px;
@@ -149,6 +149,7 @@ img { max-width: 100%; }
 }
 
 .form-bottom form button.btn {
+	margin-top: 5px;
 	width: 100%;
 }
 
