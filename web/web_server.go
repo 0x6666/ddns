@@ -75,7 +75,7 @@ func (ws *WebServer) regWebHandler() {
 	auth.POST(pRecodes, ws.h.newRecode)
 	auth.GET(pRecode, ws.h.getRecode)
 	auth.POST(pRecode, ws.h.getRecode)
-	auth.PATCH(pRecode, ws.h.getRecode)
+	auth.PATCH(pRecode, ws.h.updateRecode)
 	auth.DELETE(pRecode, ws.h.deleteRecode)
 }
 

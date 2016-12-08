@@ -7,7 +7,7 @@
 			url: api,
 			data: data,
 			cache: false,
-			async: (async === undefined  || async) ? true : false,
+			async: (async === undefined || async) ? true : false,
 			contentType: (!contentType || contentType.length === 0) ? 'application/x-www-form-urlencoded; charset=UTF-8' : contentType,
 			xhrFields: {
 				withCredentials: true
@@ -17,7 +17,7 @@
 		});
 	};
 
-	var new_recode = function(data, suCallback, failCallback) {
+	var new_recode = function (data, suCallback, failCallback) {
 		basic_func("POST", "/recodes", data, suCallback, failCallback);
 	};
 
@@ -25,9 +25,13 @@
 		basic_func("DELETE", "/recode/" + id, undefined, suCallback, failCallback);
 	};
 
+	var update_recode = function (id, data, suCallback, failCallback) {
+		basic_func("PATCH", "/recode/" + id, data, suCallback, failCallback);
+	};
+
 	exports.ddns_new_recode = new_recode;
 	exports.ddns_delete_recode = delete_recode;
-
+	exports.ddns_update_recode = update_recode;
 })((typeof (exports) === "object" ? exports : window), jQuery);
 
 $(function () {
@@ -68,21 +72,21 @@ $(function () {
 			xhrFields: {
 				withCredentials: true
 			},
-			headers : {'DDNS-View': "true"},
-			success: function(data, b, c){
+			headers: { 'DDNS-View': "true" },
+			success: function (data, b, c) {
 				if (c.status == 401) {
 					window.location.href = "/login";
 					return;
 				} else if (c.status == 200) {
 					$("#view-container").html(data);
-					var state = {title:'',url:href};
-					history.pushState(state,'',href);
+					var state = { title: '', url: href };
+					history.pushState(state, '', href);
 					//meny.close();
 					return;
 				}
 				window.location.href = href;
 			},
-			error: function(){
+			error: function () {
 				window.location.href = href;
 			}
 		});
@@ -298,21 +302,36 @@ function on_init_recode_lists() {
 	}
 	window.operateEvents = {
 		'click .save': function (e, value, row, idx) {
-			ddns_new_recode({ name: row.name, value: row.value, ttl: row.ttl },
-				function (rspData) {
-					if (rspData.code == "ok") {
-						$table.bootstrapTable('updateRow', { index: idx, row: { id: rspData.id, key: rspData.key, dynamic: rspData.dynamic} });
-					} else {
-						var msg = rspData.code;
-						if (rspData.msg && rspData.msg.length)
-							msg += ("   " + rspData.msg);
-						alert(msg);
-					}
-				},
-				function (a, b, c) {
+			if (row.id && row.id > 0) {
+				ddns_update_recode(row.id, { name: row.name, value: row.value, ttl: row.ttl, dynamic: row.dynamic },
+					function (rspData) {
+						if (rspData.code === "ok") {
+							alert("ok");
+						} else {
+							var msg = rspData.code;
+							if (rspData.msg && rspData.msg.length)
+								msg += ("   " + rspData.msg);
+							alert(msg);
+						}
+					},
+					function (a, b, c) { });
+			} else {
+				ddns_new_recode({ name: row.name, value: row.value, ttl: row.ttl },
+					function (rspData) {
+						if (rspData.code == "ok") {
+							$table.bootstrapTable('updateRow', { index: idx, row: { id: rspData.id, key: rspData.key, dynamic: rspData.dynamic } });
+						} else {
+							var msg = rspData.code;
+							if (rspData.msg && rspData.msg.length)
+								msg += ("   " + rspData.msg);
+							alert(msg);
+						}
+					},
+					function (a, b, c) {
 
-				}
-			);
+					}
+				);
+			}
 		},
 		'click .remove': function (e, value, row, index) {
 

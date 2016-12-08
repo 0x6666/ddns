@@ -325,6 +325,53 @@ func (h *handler) getRecode(c *gin.Context) {
 	c.Redirect(http.StatusFound, "/html/index.html")
 }
 
+// updateRecode -> [PATCH] :/recode/:id
+//
+// Ret Code:[200]
+//
+// 更新一条记录
+//
+// 成功返回值
+// 	{
+//		"result": "ok"
+//	}
+//
+// 失败返回值
+//	{
+//		"result": "xxx"
+//	}
+//
+func (h *handler) updateRecode(c *gin.Context) {
+	r, err := h.getRecodeFromParam(c)
+	if err != nil {
+		return
+	}
+
+	r.RecordName = c.DefaultPostForm("name", r.RecordName)
+	def := "false"
+	if r.Dynamic {
+		def = "true"
+	}
+	def = c.DefaultPostForm("dynamic", def)
+	r.Dynamic = (def == "true")
+
+	if !r.Dynamic {
+		r.RecodeValue = c.DefaultPostForm("value", r.RecodeValue)
+	}
+
+	r.TTL, _ = strconv.Atoi(c.DefaultPostForm("ttl", fmt.Sprintf("%v", r.TTL)))
+	if r.TTL == 0 {
+		r.TTL = 600
+	}
+
+	err = h.ws.db.UpdateRecode(r)
+	if err != nil {
+		h.rspError(c, err)
+	} else {
+		h.rspOk(c)
+	}
+}
+
 // deleteRecode -> [DELETE] :/recode/:id
 //
 // Ret Code:[200]
