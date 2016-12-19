@@ -26,9 +26,9 @@ function logout(e) {
 //BASIC
 
 gulp.task('rev', function () {
-    gulp.src([manifestDir + '/**/*.json', htmlSrc])											//- 读取 *.json 文件以及需要进行css名替换的文件
-        .pipe(revCollector())													//- 执行文件内css名的替换
-        .pipe(gulp.dest(destHtml));												//- 替换后的文件输出的目录
+    gulp.src([manifestDir + '/**/*.json', htmlSrc])
+        .pipe(revCollector())
+        .pipe(gulp.dest(destHtml));
 });
 
 gulp.task('html_watch', function () { gulp.watch(htmlSrc, ['rev']); });
@@ -45,12 +45,12 @@ function regCSS(name, src) {
     var sassName = name + '_sass';
     gulp.task(sassName, function () {
         return gulp.src(src)
-            .pipe(sass({ outputStyle: 'compressed' }).on('error', sass.logError))		//- sass 编译,压缩
-            .pipe(concat(name + '.min.css'))                      				//- 合并后的文件名
-            .pipe(rev())                   											//- 文件名加MD5后缀
-            .pipe(gulp.dest(destCssDir))                      						//- 输出文件本地
-            .pipe(rev.manifest('./rev/css/' + name + '.json', { base: manifestDir, merge: true }))    //- 生成一个css.json
-            .pipe(gulp.dest(manifestDir));                          				//- 将 css.json 保存到 rev 目录内
+            .pipe(sass({ outputStyle: 'compressed' }).on('error', sass.logError))
+            .pipe(concat(name + '.min.css'))
+            .pipe(rev())
+            .pipe(gulp.dest(destCssDir))
+            .pipe(rev.manifest('./rev/css/' + name + '.json', { base: manifestDir, merge: true }))
+            .pipe(gulp.dest(manifestDir));
     });
 
     var subName = name + '_css';
@@ -74,17 +74,17 @@ function regJs(name, src, noJshint) {
     gulp.task(uglifyName, function () {
         var _gulp = gulp.src(src);
         if (!noJshint) {
-            _gulp = _gulp.pipe(jshint())       													//- 进行检查
-                .pipe(jshint.reporter('default'));  										//- 对代码进行报错提示
+            _gulp = _gulp.pipe(jshint())
+                .pipe(jshint.reporter('default'));
         }
-        _gulp.pipe(concat(name + '.js'))												//- 合成main.js
-            .pipe(gulp.dest(destJsDir))												//- 输出
-            .pipe(uglify().on('error', logout))										//- 压缩
-            .pipe(rename(name + ".min.js"))											//- 当作是改名吧
-            .pipe(rev())                    										//- 文件名加MD5后缀
-            .pipe(gulp.dest(destJsDir))                      						//- 输出文件本地
-            .pipe(rev.manifest('./rev/js/' + name + '.json', { base: manifestDir, merge: true }))     //- 生成一个js.json
-            .pipe(gulp.dest(manifestDir));                          				//- 将js.json 保存到 rev 目录内
+        _gulp.pipe(concat(name + '.js'))
+            .pipe(gulp.dest(destJsDir))
+            .pipe(uglify().on('error', logout))
+            .pipe(rename(name + ".min.js"))
+            .pipe(rev())
+            .pipe(gulp.dest(destJsDir))
+            .pipe(rev.manifest('./rev/js/' + name + '.json', { base: manifestDir, merge: true }))
+            .pipe(gulp.dest(manifestDir));
     });
 
     var subName = name + '_js';

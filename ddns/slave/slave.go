@@ -136,7 +136,7 @@ func (ss *SlaveServer) checkUpdate(force bool) {
 		}
 	}()
 
-	err = db.ClearRecodes()
+	err = db.ClearRecodes(true)
 	if err != nil {
 		log.Error(err.Error())
 		return
@@ -149,6 +149,7 @@ func (ss *SlaveServer) checkUpdate(force bool) {
 		_r.RecordName = r.Name
 		_r.RecordType = r.Type
 		_r.TTL = r.Ttl
+		_r.Synced = true
 		if len(r.Key) > 0 {
 			_r.UpdateKey.String = r.Key
 			_r.UpdateKey.Valid = true

@@ -12,7 +12,7 @@ type IDatabase interface {
 	FindByKey(key string) (*model.Recode, error)
 	GetRecode(id int64) (*model.Recode, error)
 	DeleteRecode(id int64) error
-	ClearRecodes() error
+	ClearRecodes(bSynced bool) error
 	UpdateRecode(r *model.Recode) error
 
 	GetVersion() int64

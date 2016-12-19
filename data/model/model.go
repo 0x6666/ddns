@@ -47,6 +47,7 @@ type Recode struct {
 	RecordName  string         `gorm:"column:name"`
 	RecodeValue string         `gorm:"column:value"`
 	TTL         int            `gorm:"column:ttl"`
+	Synced      bool           `gorm:"column:synced;default:'false'"`
 }
 
 func (Recode) TableName() string {

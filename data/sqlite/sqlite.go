@@ -128,8 +128,12 @@ func (s *SqliteDB) DeleteRecode(id int64) error {
 	return d.Error
 }
 
-func (s *SqliteDB) ClearRecodes() error {
-	return s.db.Delete(&model.Recode{}).Error
+func (s *SqliteDB) ClearRecodes(bSynced bool) error {
+	db := s.db
+	if bSynced {
+		db = db.Where("synced = true")
+	}
+	return db.Delete(&model.Recode{}).Error
 }
 
 func (s *SqliteDB) UpdateRecode(r *model.Recode) error {
