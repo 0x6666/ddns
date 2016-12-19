@@ -131,7 +131,7 @@ func (s *SqliteDB) DeleteRecode(id int64) error {
 func (s *SqliteDB) ClearRecodes(bSynced bool) error {
 	db := s.db
 	if bSynced {
-		db = db.Where("synced = true")
+		db = db.Where("key = ?", true)
 	}
 	return db.Delete(&model.Recode{}).Error
 }
