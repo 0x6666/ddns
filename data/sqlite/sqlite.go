@@ -61,7 +61,7 @@ func (s *SqliteDB) Init() error {
 
 	//defer db.Close()
 
-	s.db = db.AutoMigrate(&model.User{}, &model.Recode{}, &model.SchemaVersion{})
+	s.db = db.AutoMigrate(&model.User{}, &model.Domain{}, &model.Recode{}, &model.SchemaVersion{})
 
 	return db.Error
 }
@@ -184,6 +184,7 @@ func (s *SqliteDB) BeginTransaction() (data.IDatabase, error) {
 func (s *SqliteDB) Rollback() error {
 	return s.db.Rollback().Error
 }
+
 func (s *SqliteDB) Commit() error {
 	return s.db.Commit().Error
 }

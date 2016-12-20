@@ -5,7 +5,7 @@ import (
 	"time"
 )
 
-const CurrentVersion = "0.1"
+const CurrentVersion = "1.0"
 
 type Model struct {
 	ID        int64 `gorm:"primary_key"`
@@ -29,17 +29,29 @@ type Version struct {
 
 type User struct {
 	Model
-	Name    string `gorm:"size:255"`
-	Recodes []Recode
+	Name    string   `gorm:"size:255"`
+	Domains []Domain `gorm:"ForeignKey:UserID"`
 }
 
 func (User) TableName() string {
 	return "users"
 }
 
+type Domain struct {
+	Model
+	UserID int64 `gorm:"index"`
+
+	DomainName string   `gorm:"column:domain_name;unique_index"`
+	Recodes    []Recode `gorm:"ForeignKey:DomainID"`
+}
+
+func (Domain) TableName() string {
+	return "domains"
+}
+
 type Recode struct {
 	Model
-	UserID int `gorm:"index"`
+	DomainID int64 `gorm:"column:domain_id;index"`
 
 	Dynamic     bool           `gorm:"column:dynamic"` //是否未动态
 	UpdateKey   sql.NullString `gorm:"column:key;unique_index"`

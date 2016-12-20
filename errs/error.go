@@ -7,4 +7,5 @@ var (
 	ErrNotImplement    = errors.New("not implement")
 	ErrRecodeExist     = errors.New("recode already exist")
 	ErrInvalidParam    = errors.New("invalid param")
+	ErrDomianExist     = errors.New("domain already exist")
 )
