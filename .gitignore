@@ -7,3 +7,4 @@
 /ddns_static/bootstrap-login-forms
 /ddns_static/node_modules
 /.vscode
+/ddns_static/assets/vendors/react-15.3.1

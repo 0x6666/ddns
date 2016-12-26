@@ -110,24 +110,6 @@ func (s *SqliteDB) FindByKey(key string) (*model.Recode, error) {
 	return &recode, nil
 }
 
-func (s *SqliteDB) GetRecode(id int64) (*model.Recode, error) {
-	var r model.Recode
-	err := s.db.First(&r, id).Error
-	if err != nil {
-		log.Error(err.Error())
-		return nil, err
-	}
-	return &r, nil
-}
-
-func (s *SqliteDB) DeleteRecode(id int64) error {
-	r := &model.Recode{}
-	r.ID = id
-	d := s.db.Delete(r)
-	go s.updateVersion()
-	return d.Error
-}
-
 func (s *SqliteDB) ClearRecodes(bSynced bool) error {
 	db := s.db
 	if bSynced {

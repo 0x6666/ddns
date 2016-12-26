@@ -30,13 +30,13 @@ type SlaveServer struct {
 }
 
 type recode struct {
-	Id      int64  `json:"id"`
-	Type    int    `json:"type"`
-	Name    string `json:"name"`
-	Dynamic bool   `json:"dynamic"`
-	Value   string `json:"value"`
-	Ttl     int    `json:"ttl"`
-	Key     string `json:"key"`
+	Id      int64            `json:"id"`
+	Type    model.RecodeType `json:"type"`
+	Name    string           `json:"name"`
+	Dynamic bool             `json:"dynamic"`
+	Value   string           `json:"value"`
+	Ttl     int              `json:"ttl"`
+	Key     string           `json:"key"`
 }
 
 func (ss *SlaveServer) Init(db data.IDatabase) error {

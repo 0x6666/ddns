@@ -1,110 +1,4 @@
 
-$(function () {
-
-	var meny = Meny.create({
-		menuElement: document.querySelector('.meny'),
-		contentsElement: document.querySelector('.contents'),
-		position: Meny.getQuery().p || 'left',
-		height: 200,
-		width: 260,
-		threshold: 30,
-		mouse: true,
-		touch: true,
-		overlap: 0
-	});
-
-	window.meny = meny;
-
-	// Embed an iframe if a URL is passed in
-	/*if (Meny.getQuery().u && Meny.getQuery().u.match(/^http/gi)) {
-		var contents = document.querySelector('.contents');
-		contents.style.padding = '0px';
-		contents.innerHTML = '<div class="cover"></div><iframe src="' + Meny.getQuery().u + '" style="width: 100%; height: 100%; border: 0; position: absolute;"></iframe>';
-	}*/
-
-	$(".menu-item").click(function (e) {
-		//e.preventDefault();
-		var href = $(this).attr('href');
-		if (href.match(/^http/gi)) {
-			return true;
-		}
-
-		$.ajax({
-			type: "GET",
-			url: href,
-			cache: false,
-			dataType: "html",
-			xhrFields: {
-				withCredentials: true
-			},
-			headers: { 'DDNS-View': "true" },
-			success: function (data, b, c) {
-				if (c.status == 401) {
-					window.location.href = "/login";
-					return;
-				} else if (c.status == 200) {
-					$("#view-container").html(data);
-					var state = { title: '', url: href };
-					history.pushState(state, '', href);
-					//meny.close();
-					return;
-				}
-				window.location.href = href;
-			},
-			error: function () {
-				window.location.href = href;
-			}
-		});
-		e.preventDefault();
-	});
-} ());
-
-function get_script(url, callback) {
-	var head = document.getElementsByTagName('head')[0];
-	var script = document.createElement('script');
-	script.src = url;
-	var done = false;
-	// Attach handlers for all browsers
-	script.onload = script.onreadystatechange = function () {
-		if (!done && (!this.readyState ||
-			this.readyState == 'loaded' || this.readyState == 'complete')) {
-			done = true;
-			if (callback)
-				callback();
-			// Handle memory leak in IE
-			script.onload = script.onreadystatechange = null;
-		}
-	};
-	head.appendChild(script);
-	// We handle everything using the script element injection
-	return undefined;
-}
-
-function load_series(arr, callback) {
-	callback = callback || function () { };
-	if (!arr.length) return callback();
-
-	var completed = 0;
-	var iterate = function () {
-		get_script(arr[completed], function (err) {
-			if (err) {
-				callback(err);
-				callback = function () { };
-			}
-			else {
-				completed += 1;
-				if (completed >= arr.length) {
-					callback(null);
-				}
-				else {
-					iterate();
-				}
-			}
-		});
-	};
-	iterate();
-}
-
 function on_init_recode_lists() {
 
 	var $table = $('#tb_recodes'),
@@ -355,4 +249,8 @@ function on_init_recode_lists() {
 
 		load_series(scripts, initTable);
 	});*/
+}
+
+function on_init_domians_view() {
+
 }

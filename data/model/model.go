@@ -7,6 +7,14 @@ import (
 
 const CurrentVersion = "1.0"
 
+type RecodeType int
+
+const (
+	AAAA RecodeType = iota
+	A
+	CNAME
+)
+
 type Model struct {
 	ID        int64 `gorm:"primary_key"`
 	CreatedAt time.Time
@@ -53,13 +61,14 @@ type Recode struct {
 	Model
 	DomainID int64 `gorm:"column:domain_id;index"`
 
-	Dynamic     bool           `gorm:"column:dynamic"` //是否未动态
-	UpdateKey   sql.NullString `gorm:"column:key;unique_index"`
-	RecordType  int            `gorm:"column:type"` // 1 ipv4
-	RecordName  string         `gorm:"column:name"`
-	RecodeValue string         `gorm:"column:value"`
-	TTL         int            `gorm:"column:ttl"`
-	Synced      bool           `gorm:"column:synced;default:'false'"`
+	Dynamic   bool           `gorm:"column:dynamic"` //是否未动态
+	UpdateKey sql.NullString `gorm:"column:key;unique_index"`
+	Synced    bool           `gorm:"column:synced;default:'false'"`
+
+	RecordType  RecodeType `gorm:"unique_index:recode_unique;column:type;type:int"` // 1 ipv4
+	RecordName  string     `gorm:"unique_index:recode_unique;column:name"`
+	RecodeValue string     `gorm:"unique_index:recode_unique;column:value"`
+	TTL         int        `gorm:"column:ttl"`
 }
 
 func (Recode) TableName() string {

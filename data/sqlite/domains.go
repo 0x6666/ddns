@@ -4,7 +4,7 @@ import (
 	"strings"
 
 	"github.com/inimei/backup/log"
-	"github.com/inimei/ddns/data/model"
+	m "github.com/inimei/ddns/data/model"
 	"github.com/inimei/ddns/errs"
 )
 
@@ -12,7 +12,7 @@ func (s *SqliteDB) NewDomain(userID int64, name string) (int64, error) {
 
 	n := strings.ToLower(name)
 
-	var d model.Domain
+	var d m.Domain
 	if err := s.db.First(&d, "domain_name = ?", n).Error; err == nil {
 		return -1, errs.ErrDomianExist
 	}
@@ -28,7 +28,7 @@ func (s *SqliteDB) NewDomain(userID int64, name string) (int64, error) {
 func (s *SqliteDB) UpdateDomain(domainID int64, newName string) error {
 	n := strings.ToLower(newName)
 
-	var d model.Domain
+	var d m.Domain
 	if err := s.db.First(&d, "domain_name = ?", n).Error; err == nil {
 		//exist
 		if d.ID == domainID {
@@ -54,7 +54,7 @@ func (s *SqliteDB) UpdateDomain(domainID int64, newName string) error {
 }
 
 func (s *SqliteDB) DeleteDomain(domainID int64) error {
-	d := model.Domain{}
+	d := m.Domain{}
 	var err error
 	if err = s.db.First(&d, domainID).Error; err != nil {
 		log.Error(err.Error())
@@ -70,7 +70,7 @@ func (s *SqliteDB) DeleteDomain(domainID int64) error {
 		}
 	}()
 
-	err = db.Where(&model.Recode{DomainID: d.ID}).Delete(&model.Recode{}).Error
+	err = db.Where(&m.Recode{DomainID: d.ID}).Delete(&m.Recode{}).Error
 	if err != nil {
 		log.Error(err.Error())
 		return err
@@ -84,9 +84,18 @@ func (s *SqliteDB) DeleteDomain(domainID int64) error {
 	return nil
 }
 
-func (s *SqliteDB) GetDomains(userID int64) ([]*model.Domain, error) {
-	ds := []*model.Domain{}
-	err := s.db.Where(&model.Domain{UserID: userID}).Find(&ds).Error
+func (s *SqliteDB) GetDomain(domainID int64) (*m.Domain, error) {
+	d := m.Domain{}
+	if err := s.db.First(&d, domainID).Error; err != nil {
+		log.Error(err.Error())
+		return nil, err
+	}
+	return &d, nil
+}
+
+func (s *SqliteDB) GetDomains(userID int64) ([]*m.Domain, error) {
+	ds := []*m.Domain{}
+	err := s.db.Where(&m.Domain{UserID: userID}).Find(&ds).Error
 	if err != nil {
 		log.Error(err.Error())
 		return nil, err
@@ -94,12 +103,63 @@ func (s *SqliteDB) GetDomains(userID int64) ([]*model.Domain, error) {
 	return ds, nil
 }
 
-func (s *SqliteDB) GetAllDomains(offset, limit int) ([]*model.Domain, error) {
-	ds := []*model.Domain{}
+func (s *SqliteDB) GetAllDomains(offset, limit int) ([]*m.Domain, error) {
+	ds := []*m.Domain{}
 	db := s.db.Offset(offset).Limit(limit).Find(&ds)
 	if db.Error != nil {
 		log.Error(db.Error.Error())
 		return nil, db.Error
 	}
 	return ds, nil
+}
+
+func (s *SqliteDB) GetRecodes(domainID int64, offset, limit int) ([]*m.Recode, error) {
+
+	d := &m.Domain{}
+	d.ID = domainID
+	rs := []*m.Recode{}
+	db := s.db.Model(d).Offset(offset).Limit(limit).Related(&rs)
+	if db.Error != nil {
+		log.Error(db.Error.Error())
+		return nil, db.Error
+	}
+	return rs, nil
+}
+
+func (s *SqliteDB) NewRecode(domainID int64, r *m.Recode) (int64, error) {
+
+	if r == nil || domainID == 0 {
+		return 0, errs.ErrInvalidParam
+	}
+
+	d := m.Domain{}
+	if err := s.db.First(&d, domainID).Error; err != nil {
+		log.Error(err.Error())
+		return 0, err
+	}
+
+	r.DomainID = d.ID
+	if err := s.db.Create(r).Error; err != nil {
+		return 0, err
+	}
+
+	return 0, nil
+}
+
+func (s *SqliteDB) GetRecode(id int64) (*m.Recode, error) {
+	var r m.Recode
+	err := s.db.First(&r, id).Error
+	if err != nil {
+		log.Error(err.Error())
+		return nil, err
+	}
+	return &r, nil
+}
+
+func (s *SqliteDB) DeleteRecode(id int64) error {
+	r := &m.Recode{}
+	r.ID = id
+	d := s.db.Delete(r)
+	go s.updateVersion()
+	return d.Error
 }
