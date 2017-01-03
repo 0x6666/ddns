@@ -44,18 +44,24 @@ func (h *handler) apiGetDataSchemaVersion(c *gin.Context) {
 // 成功返回值
 //	{
 //		"code": "OK",
-//		"recodes": [
+//		"domains": [
 //			{
 //				"id" : xxx,
-//				"name": "xxxx",
-//				"dynamic": true,
-//				"ttl": xxx,
-//				"key": "xxxx",
-//				"value": "xxxx"
+//				"domain": "xxxx",
+//				"recodes": [
+//					{
+//						"id" : xxx,
+//						"value": "xxxx",
+//						"type":	type,
+//						"name":	"name"
+//						"ttl": xxx,
+//						"dynamic": true,
+//						"key": "xxxx"
+//					}
+//				]
 //			}
 //		]
 //	}
-//
 // 失败返回值
 //		code: xxx
 //
@@ -67,31 +73,45 @@ func (h *handler) apiGetRecodes(c *gin.Context) {
 	limit, _ := strconv.ParseInt(l, 10, 64)
 	offset, _ := strconv.ParseInt(o, 10, 64)
 
-	data, err := h.ws.db.ReadData(int(offset), int(limit))
+	domains, err := h.ws.db.GetAllDomains(int(offset), int(limit))
 	if err != nil {
 		log.Error(err.Error())
 		h.rspError(c, err)
 		return
 	}
 
-	dastamap := []map[string]interface{}{}
-	for _, d := range data {
-		dataJosn := map[string]interface{}{}
-		dataJosn["id"] = d.ID
-		dataJosn["type"] = d.RecordType
-		dataJosn["name"] = d.RecordName
-		dataJosn["dynamic"] = d.Dynamic
-		dataJosn["ttl"] = d.TTL
-		dataJosn["value"] = d.RecodeValue
-		if d.UpdateKey.Valid {
-			dataJosn["key"] = d.UpdateKey.String
+	domainsJson := []map[string]interface{}{}
+	for _, d := range domains {
+		dJson := map[string]interface{}{}
+		dJson["id"] = d.ID
+		dJson["domain"] = d.DomainName
+
+		recodes, err := h.ws.db.GetRecodes(d.ID, 0, -1)
+		if err != nil {
+			log.Error(err.Error())
+		} else {
+			recodesJson := []map[string]interface{}{}
+			for _, r := range recodes {
+				rJson := map[string]interface{}{}
+				rJson["id"] = r.ID
+				rJson["value"] = r.RecodeValue
+				rJson["type"] = r.RecordType
+				rJson["name"] = r.RecordHost
+				rJson["ttl"] = r.TTL
+				rJson["dynamic"] = r.Dynamic
+				rJson["key"] = r.UpdateKey
+
+				recodesJson = append(recodesJson, rJson)
+			}
+			dJson["recodes"] = recodesJson
 		}
-		dastamap = append(dastamap, dataJosn)
+
+		domainsJson = append(domainsJson, dJson)
 	}
 
 	res := map[string]interface{}{}
 	res["code"] = CodeOK
-	res["recodes"] = dastamap
+	res["domains"] = domainsJson
 
 	c.JSON(http.StatusOK, res)
 }
@@ -141,7 +161,8 @@ func (h *handler) apiUpdateRecode(c *gin.Context) {
 	}
 
 	recode.RecodeValue = ip
-	err = h.ws.db.UpdateRecode(recode)
+
+	err = h.ws.db.UpdateRecode(recode.ID, recode)
 	if err != nil {
 		log.Error(err.Error())
 		h.rspError(c, err)

@@ -94,14 +94,6 @@ func (s *SqliteDB) ReadData(offset, limit int) ([]*model.Recode, error) {
 	return rc, nil
 }
 
-func (s *SqliteDB) FindByName(name string) (*model.Recode, error) {
-	var recode model.Recode
-	if err := s.db.First(&recode, "name = ?", name).Error; err != nil {
-		return nil, err
-	}
-	return &recode, nil
-}
-
 func (s *SqliteDB) FindByKey(key string) (*model.Recode, error) {
 	var recode model.Recode
 	if err := s.db.First(&recode, "key = ?", key).Error; err != nil {
@@ -116,16 +108,6 @@ func (s *SqliteDB) ClearRecodes(bSynced bool) error {
 		db = db.Where("key = ?", true)
 	}
 	return db.Delete(&model.Recode{}).Error
-}
-
-func (s *SqliteDB) UpdateRecode(r *model.Recode) error {
-	db := s.db.Save(r)
-	if db.Error != nil {
-		log.Error(db.Error.Error())
-	}
-
-	go s.updateVersion()
-	return db.Error
 }
 
 func (s *SqliteDB) GetVersion() int64 {

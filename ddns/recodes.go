@@ -10,29 +10,30 @@ import (
 
 	"github.com/inimei/backup/log"
 	"github.com/inimei/ddns/data"
+	"github.com/inimei/ddns/data/model"
 	"github.com/miekg/dns"
 )
 
-type recode struct {
-	domain string
-	ip     string
-	ttl    int
+type recodeValue struct {
+	ip  string
+	ttl int
 }
+
+type recode map[uint16]recodeValue //map[recodeType]RecodeValue
+type recodes map[string]recode     //map[RecordName]recode
 
 type DBRecodes struct {
 	db data.IDatabase
 
 	sync.RWMutex
-
-	cache map[string]recode
-
+	cache        map[string]recodes //map[domain]recodes
 	cacheVersion int64
 }
 
 func NewDBRecodes(db data.IDatabase) *DBRecodes {
 
 	dr := &DBRecodes{db: db}
-	dr.cache = map[string]recode{}
+	dr.cache = map[string]recodes{}
 	dr.cacheVersion = -1
 	go func() { dr.update() }()
 	dr.refresh()
@@ -50,24 +51,31 @@ func (d *DBRecodes) Get(domain string, qtype uint16) ([]net.IP, int, bool) {
 	defer d.RUnlock()
 
 	dm := strings.ToLower(domain)
-	if r, exist := d.cache[dm]; exist {
-		var ip net.IP = net.ParseIP(r.ip)
-		switch {
-		case ip == nil:
-			log.Error("invalid ip address [%v]", r.ip)
-			return []net.IP{ip}, r.ttl, true
-		case qtype == dns.TypeA:
-			ip = ip.To4()
-		case qtype == dns.TypeAAAA:
-			if ip.To4() == nil {
-				ip = ip.To16()
-			} else {
-				ip = nil
-			}
-		}
+	if d, exist := d.cache[dm]; exist {
 
-		if ip != nil {
-			return []net.IP{ip}, r.ttl, true
+		switch qtype {
+		case dns.TypeA, dns.TypeAAAA:
+			if r, e := d["@"]; e {
+				if v, e := r[qtype]; e {
+					ip := net.ParseIP(v.ip)
+					if ip == nil {
+						log.Error("invalid ip [%v], type [%v]", v.ip, qtype)
+						return nil, 0, false
+					}
+					if qtype == dns.TypeA {
+						ip = ip.To4()
+					} else {
+						if ip.To4() == nil {
+							ip = ip.To16()
+						} else {
+							ip = nil
+						}
+					}
+					if ip != nil {
+						return []net.IP{ip}, v.ttl, true
+					}
+				}
+			}
 		}
 	}
 	return nil, 0, false
@@ -79,25 +87,33 @@ func (d *DBRecodes) update() {
 		return
 	}
 
-	datas, err := d.db.ReadData(-1, -1)
+	ds, err := d.db.GetAllDomains(0, -1)
 	if err != nil {
-		log.Error("ReadData failed: %v", err)
+		log.Error("GetAllDomains failed: %v", err)
 		return
 	}
 
-	cache := map[string]recode{}
-	for _, data := range datas {
-		if len(data.RecordName) == 0 || len(data.RecodeValue) == 0 {
-			continue
+	cache := map[string]recodes{}
+	for _, domain := range ds {
+		recodes, err := d.db.GetRecodes(domain.ID, 0, -1)
+		if err != nil {
+			log.Error("get recodes domainID [%v]: %v", domain.ID, err)
+			return
 		}
-		r := recode{}
-		r.domain = strings.ToLower(data.RecordName)
-		r.ip = data.RecodeValue
-		r.ttl = data.TTL
-		if r.ttl <= 0 {
-			r.ttl = 600
+
+		rc := map[string]recode{}
+		for _, r := range recodes {
+			v := recodeValue{ip: r.RecodeValue, ttl: r.TTL}
+			if v.ttl <= 0 {
+				v.ttl = 600
+			}
+			if r.RecordType == model.A {
+				rc[r.RecordHost] = recode{dns.TypeA: v}
+			} else if r.RecordType == model.AAAA {
+				rc[r.RecordHost] = recode{dns.TypeAAAA: v}
+			}
 		}
-		cache[r.domain] = r
+		cache[domain.DomainName] = rc
 	}
 
 	d.Lock()

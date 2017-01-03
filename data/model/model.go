@@ -6,6 +6,7 @@ import (
 )
 
 const CurrentVersion = "1.0"
+const DefUserID int64 = 1
 
 type RecodeType int
 
@@ -63,10 +64,10 @@ type Recode struct {
 
 	Dynamic   bool           `gorm:"column:dynamic"` //是否未动态
 	UpdateKey sql.NullString `gorm:"column:key;unique_index"`
-	Synced    bool           `gorm:"column:synced;default:'false'"`
+	Synced    bool           `gorm:"column:synced;default:'false'"` //for slave
 
 	RecordType  RecodeType `gorm:"unique_index:recode_unique;column:type;type:int"` // 1 ipv4
-	RecordName  string     `gorm:"unique_index:recode_unique;column:name"`
+	RecordHost  string     `gorm:"unique_index:recode_unique;column:host"`
 	RecodeValue string     `gorm:"unique_index:recode_unique;column:value"`
 	TTL         int        `gorm:"column:ttl"`
 }

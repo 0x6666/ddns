@@ -1,5 +1,5 @@
 
-$(function (exports) {
+(function (exports) {
 
 	var meny = Meny.create({
 		menuElement: document.querySelector('.meny'),

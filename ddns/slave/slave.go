@@ -37,6 +37,7 @@ type recode struct {
 	Value   string           `json:"value"`
 	Ttl     int              `json:"ttl"`
 	Key     string           `json:"key"`
+	domian  string
 }
 
 func (ss *SlaveServer) Init(db data.IDatabase) error {
@@ -143,10 +144,16 @@ func (ss *SlaveServer) checkUpdate(force bool) {
 	}
 
 	for _, r := range recodes {
+		d, err := db.FindDomainByName(r.domian)
+		if err != nil {
+			log.Error("find domain [%v] failed: %v", r.domian, err)
+			continue
+		}
+
 		_r := model.Recode{}
 		_r.Dynamic = r.Dynamic
 		_r.RecodeValue = r.Value
-		_r.RecordName = r.Name
+		_r.RecordHost = r.Name
 		_r.RecordType = r.Type
 		_r.TTL = r.Ttl
 		_r.Synced = true
@@ -154,7 +161,7 @@ func (ss *SlaveServer) checkUpdate(force bool) {
 			_r.UpdateKey.String = r.Key
 			_r.UpdateKey.Valid = true
 		}
-		if _, err = db.CreateRecode(&_r); err != nil {
+		if _, err = db.NewRecode(d.ID, &_r); err != nil {
 			log.Error(err.Error())
 			return
 		}
@@ -190,9 +197,13 @@ func (ss *SlaveServer) getRecodes() ([]recode, error) {
 	bodyData, err := ioutil.ReadAll(resp.Body)
 
 	var data = struct {
-		Code    string   `json:"code"`
-		Msg     string   `json:"msg"`
-		Recodes []recode `json:"recodes"`
+		Code    string `json:"code"`
+		Msg     string `json:"msg"`
+		Domains []struct {
+			ID      int64    `json:"id"`
+			Domain  string   `json:"domain"`
+			Recodes []recode `json:"recodes"`
+		} `json:"recodes"`
 	}{}
 
 	err = json.Unmarshal(bodyData, &data)
@@ -207,7 +218,17 @@ func (ss *SlaveServer) getRecodes() ([]recode, error) {
 		return nil, err
 	}
 
-	return data.Recodes, nil
+	rs := []recode{}
+	for _, d := range data.Domains {
+		_rs := []recode{}
+		for _, r := range d.Recodes {
+			r.domian = d.Domain
+			_rs = append(_rs, r)
+		}
+		rs = append(rs, _rs...)
+	}
+
+	return rs, nil
 }
 
 func (ss *SlaveServer) getVersion() (*model.Version, error) {

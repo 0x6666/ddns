@@ -18,6 +18,7 @@ func (s *SqliteDB) NewDomain(userID int64, name string) (int64, error) {
 	}
 
 	d.DomainName = n
+	d.UserID = userID
 	if err := s.db.Create(&d).Error; err != nil {
 		return 0, err
 	}
@@ -93,6 +94,14 @@ func (s *SqliteDB) GetDomain(domainID int64) (*m.Domain, error) {
 	return &d, nil
 }
 
+func (s *SqliteDB) FindDomainByName(domain string) (*m.Domain, error) {
+	d := m.Domain{}
+	if err := s.db.First(&d, "domain_name = ?", domain).Error; err != nil {
+		return nil, err
+	}
+	return &d, nil
+}
+
 func (s *SqliteDB) GetDomains(userID int64) ([]*m.Domain, error) {
 	ds := []*m.Domain{}
 	err := s.db.Where(&m.Domain{UserID: userID}).Find(&ds).Error
@@ -105,7 +114,7 @@ func (s *SqliteDB) GetDomains(userID int64) ([]*m.Domain, error) {
 
 func (s *SqliteDB) GetAllDomains(offset, limit int) ([]*m.Domain, error) {
 	ds := []*m.Domain{}
-	db := s.db.Offset(offset).Limit(limit).Find(&ds)
+	db := s.db.Set("gorm:save_associations", false).Offset(offset).Limit(limit).Find(&ds)
 	if db.Error != nil {
 		log.Error(db.Error.Error())
 		return nil, db.Error
@@ -162,4 +171,27 @@ func (s *SqliteDB) DeleteRecode(id int64) error {
 	d := s.db.Delete(r)
 	go s.updateVersion()
 	return d.Error
+}
+
+func (s *SqliteDB) UpdateRecode(id int64, r *m.Recode) error {
+
+	r.ID = id
+	db := s.db.Save(r)
+	if db.Error != nil {
+		log.Error(db.Error.Error())
+	}
+
+	go s.updateVersion()
+	return db.Error
+}
+
+func (s *SqliteDB) FindByName(domainID int64, name string) (*m.Recode, error) {
+	d := &m.Domain{}
+	d.ID = domainID
+
+	var recode m.Recode
+	if err := s.db.Model(d).First(&recode, "name = ?", name).Error; err != nil {
+		return nil, err
+	}
+	return &recode, nil
 }

@@ -47,6 +47,31 @@
 		iterate();
 	};
 
+	var str_to_type = function(str) {
+		switch(str)
+		{
+			case 'AAAA': return 0;
+			case 'A': return 1;
+			case 'CNAME': return 2;
+			default: return -1;
+		}
+	};
+
+	var type_to_str = function(type) {
+		switch(type)
+		{
+			case 0: return 'AAAA';
+			case 1: return 'A';
+			case 2: return 'CNAME';
+			default: return "Unknow";
+		}
+	};
+
+
 	exports.load_series = load_series;
+	exports.str_to_type = str_to_type;
+	exports.type_to_str = type_to_str;
+
+
 
 })((typeof (exports) === "object" ? exports : window), jQuery);

@@ -7,6 +7,7 @@ type IDomains interface {
 	UpdateDomain(domainID int64, newName string) error
 	DeleteDomain(domainID int64) error
 	GetDomain(domainID int64) (*model.Domain, error)
+	FindDomainByName(domain string) (*model.Domain, error)
 	GetDomains(userID int64) ([]*model.Domain, error)
 	GetAllDomains(offset, limit int) ([]*model.Domain, error)
 
@@ -14,6 +15,8 @@ type IDomains interface {
 	NewRecode(domainID int64, r *model.Recode) (int64, error)
 	GetRecode(id int64) (*model.Recode, error)
 	DeleteRecode(id int64) error
+	UpdateRecode(id int64, r *model.Recode) error
+	FindByName(domainID int64, name string) (*model.Recode, error)
 }
 
 type IDatabase interface {
@@ -22,12 +25,9 @@ type IDatabase interface {
 
 	IDomains
 
-	ReadData(offset, limit int) ([]*model.Recode, error)
-	CreateRecode(r *model.Recode) (int64, error)
-	FindByName(name string) (*model.Recode, error)
 	FindByKey(key string) (*model.Recode, error)
+
 	ClearRecodes(bSynced bool) error
-	UpdateRecode(r *model.Recode) error
 
 	GetVersion() int64
 	SetVersion(v int64) //only slave sync

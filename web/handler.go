@@ -14,17 +14,19 @@ import (
 	"github.com/inimei/backup/log"
 	"github.com/inimei/ddns/config"
 	"github.com/inimei/ddns/data/model"
-	"github.com/inimei/ddns/errs"
 	"github.com/inimei/ddns/web/sessions"
 )
 
 const (
 	pRoot = "/"
 
-	pRecodes = "/recodes"
-	pRecode  = "/recode/:id"
+	pRecodes = "/domain/:did/recodes"
+	pRecode  = "/recode/:rid"
 	pLogin   = "/login"
 	pAbout   = "/about"
+
+	pDomains = "/domains"
+	pDomain  = "/domain/:did"
 
 	pUpdate = "/update"
 )
@@ -70,9 +72,10 @@ func requestType(r *http.Request) string {
 func createRecodeFromForm(c *gin.Context) *model.Recode {
 
 	r := &model.Recode{}
-	r.RecordName = c.PostForm("name")
+	r.RecordHost = c.PostForm("host")
 	r.RecodeValue = c.PostForm("value")
-	r.RecordType = 1
+	t, _ := strconv.Atoi(c.DefaultPostForm("type", "1"))
+	r.RecordType = model.RecodeType(t)
 	if len(r.RecodeValue) == 0 {
 		r.Dynamic = true
 	}
@@ -105,65 +108,9 @@ func newHandler(ws *WebServer) *handler {
 	return h
 }
 
-func (h *handler) rspOk(c *gin.Context) {
-	c.JSON(http.StatusOK, gin.H{
-		"code": CodeOK,
-	})
-}
-
-func (h *handler) rspError(c *gin.Context, err error) {
-	c.JSON(http.StatusOK, gin.H{
-		"code": CodeUnknowError,
-		"msg":  err.Error(),
-	})
-}
-
-func (h *handler) rspErrorCode(c *gin.Context, code, msg string) {
-	c.JSON(http.StatusOK, gin.H{
-		"code": code,
-		"msg":  msg,
-	})
-}
-
-func (h *handler) getTemplateParameter(c *gin.Context) map[string]interface{} {
-
-	parameters := map[string]interface{}{}
-	parameters["Env"] = h.envData
-	parameters["Layout"] = "app_layout.html"
-
-	if strings.ToLower(c.Request.Header.Get("DDNS-View")) == "true" {
-		parameters["Layout"] = "app_view.html"
-	}
-
-	return parameters
-}
-
-func (h *handler) HTML(c *gin.Context, code int, params map[string]interface{}) {
-	c.HTML(code, fmt.Sprintf("%v", params["Layout"]), params)
-}
-
 func (h *handler) root(c *gin.Context) {
 	//c.Redirect(http.StatusFound, "/html/index.html")
-	c.Redirect(http.StatusFound, pRecodes)
-}
-
-func (h *handler) getRecodeFromParam(c *gin.Context) (*model.Recode, error) {
-	rid, err := strconv.ParseInt(c.Param("id"), 10, 0)
-	if err != nil {
-		err = fmt.Errorf("parse recode id failed: %v", err.Error())
-		log.Error(err.Error())
-		h.rspErrorCode(c, CodeInvalidParam, err.Error())
-		return nil, errs.ErrInvalidParam
-	}
-
-	r, err := h.ws.db.GetRecode(rid)
-	if err != nil {
-		err = fmt.Errorf("get recode [%v] failed: %v", rid, err.Error())
-		log.Error(err.Error())
-		h.rspErrorCode(c, CodeDBError, err.Error())
-		return nil, errs.ErrInvalidParam
-	}
-	return r, err
+	c.Redirect(http.StatusFound, pDomains)
 }
 
 // getLogin -> [GET] :/login
@@ -219,28 +166,229 @@ func (h *handler) login(c *gin.Context) {
 		return
 	}
 
-	sessions.Login(c.Writer, c.Request, username)
+	sessions.Login(c.Writer, c.Request, model.DefUserID)
 
 	h.rspOk(c)
 }
 
-// getRecode -> [POST] :/recodes
+// getDomains -> [GET] :/domains?r=true&offset=10&limit=0
 //
 // Ret Code:[200]
 //
 // [request=json] 获取指定区间的记录数
+// [request=html] 获取域名列表页面
+//
+// 成功返回值
+//	{
+//		"code": "OK"
+//		"domains" : [
+//			"id": id,
+//			"domain"; "domain"
+//		]
+//	}
+//
+// 失败返回值
+//		code: xxx
+//
+func (h *handler) getDomains(c *gin.Context) {
+	if t := requestType(c.Request); t != MIMEJSON {
+		parameters := h.getTemplateParameter(c)
+		parameters["View"] = "domains_view"
+		h.HTML(c, http.StatusOK, parameters)
+		return
+	}
+
+	/*
+		l := c.DefaultQuery("limit", "10")
+		o := c.DefaultQuery("offset", "0")
+
+		limit, _ := strconv.ParseInt(l, 10, 64)
+		offset, _ := strconv.ParseInt(o, 10, 64)
+	*/
+
+	userid, _ := sessions.GetUserID(c.Request)
+	ds, err := h.ws.db.GetDomains(userid)
+	if err != nil {
+		log.Error(err.Error())
+		h.rspError(c, err)
+		return
+	}
+
+	domainsJson := []JsonMap{}
+	for _, d := range ds {
+		domainsJson = append(domainsJson, JsonMap{
+			"id":     d.ID,
+			"domain": d.DomainName,
+		})
+	}
+
+	res := map[string]interface{}{}
+	res["code"] = CodeOK
+	res["domains"] = domainsJson
+
+	c.JSON(http.StatusOK, res)
+}
+
+// newDomain -> [POST] :/domains
+//
+// Ret Code:[200]
+//
+// 创建一个新的域名
 //
 // 成功返回值
 //	{
 //		"code": "OK",
+//		"id": newID,
+//	}
+//
+// 失败返回值
+//		code: xxx
+//
+func (h *handler) newDomain(c *gin.Context) {
+
+	d := h.createDomainFromForm(c)
+	if len(d.DomainName) == 0 {
+		c.JSON(http.StatusOK, JsonMap{
+			"code": CodeInvalidParam,
+			"msg":  "domain name can't be empty",
+		})
+		return
+	}
+
+	_, err := h.ws.db.FindDomainByName(d.DomainName)
+	if err == nil {
+		c.JSON(http.StatusOK, JsonMap{
+			"code": CodeInvalidParam,
+			"msg":  "domain name [" + d.DomainName + "] already exist",
+		})
+		return
+	}
+
+	userid, _ := sessions.GetUserID(c.Request)
+	id, err := h.ws.db.NewDomain(userid, d.DomainName)
+	if err != nil {
+		log.Error(err.Error())
+		c.JSON(http.StatusOK, JsonMap{
+			"code": CodeDBError,
+			"msg":  "create domain [" + d.DomainName + "] failed: " + err.Error(),
+		})
+		return
+	}
+
+	c.JSON(http.StatusOK, JsonMap{
+		"code": CodeOK,
+		"id":   id,
+	})
+}
+
+func (h *handler) getDomain(c *gin.Context) {
+
+}
+
+// updateDomain -> [PATCH] :/domain/:did
+//
+// Ret Code:[200]
+//
+// 更新一条记录
+//
+// 成功返回值
+// 	{
+//		"result": "ok"
+//	}
+//
+// 失败返回值
+//	{
+//		"result": "xxx"
+//	}
+//
+func (h *handler) updateDomain(c *gin.Context) {
+	d, err := h.getDomainFromParam(c)
+	if err != nil {
+		return
+	}
+
+	newD := h.createDomainFromForm(c)
+	if len(newD.DomainName) == 0 {
+		c.JSON(http.StatusOK, JsonMap{
+			"code": CodeInvalidParam,
+			"msg":  "domain name can't be empty",
+		})
+		return
+	}
+
+	if newD.DomainName == d.DomainName {
+		c.JSON(http.StatusOK, JsonMap{"code": CodeOK})
+		return
+	}
+
+	_, err = h.ws.db.FindDomainByName(newD.DomainName)
+	if err == nil {
+		c.JSON(http.StatusOK, JsonMap{
+			"code": CodeInvalidParam,
+			"msg":  "domain name [" + newD.DomainName + "] already exist",
+		})
+		return
+	}
+
+	err = h.ws.db.UpdateDomain(d.ID, newD.DomainName)
+	if err != nil {
+		h.rspError(c, err)
+	} else {
+		h.rspOk(c)
+	}
+}
+
+// deleteDomain -> [DELETE] :/domain/:did
+//
+// Ret Code:[200]
+//
+// 删除一个domain
+//
+// 成功返回值
+// 	{
+//		"result": "ok"
+//	}
+//
+// 失败返回值
+//	{
+//		"result": "xxx"
+//	}
+//
+func (h *handler) deleteDomain(c *gin.Context) {
+	d, err := h.getDomainFromParam(c)
+	if err != nil {
+		return
+	}
+
+	err = h.ws.db.DeleteDomain(d.ID)
+	if err != nil {
+		h.rspError(c, err)
+	} else {
+		h.rspOk(c)
+	}
+}
+
+// getRecodes -> [GET] :/domain/:did/recodes
+//
+// Ret Code:[200]
+//
+// [request=json] 获取指定区间的记录数
+// [request=html] 获取记录列表页面
+//
+// 成功返回值
+//	{
+//		"code": "OK",
+//		"domainID": did,
+//		"domainName": "name",
 //		"recodes": [
 //			{
 //				"id" : xxx,
-//				"name": "xxxx",
-//				"dynamic": true,
-//				"ttl": xxx,
-//				"key": "xxxx",
+//				"host": "xxxx",
+//				"type":	type
 //				"value": "xxxx"
+//				"ttl": xxx,
+//				"dynamic": true,
+//				"key": "xxxx",
 //			}
 //		]
 //	}
@@ -250,17 +398,56 @@ func (h *handler) login(c *gin.Context) {
 //
 func (h *handler) getRecodes(c *gin.Context) {
 
+	d, _ := h.getDomainFromParam(c)
 	if t := requestType(c.Request); t != MIMEJSON {
 		parameters := h.getTemplateParameter(c)
 		parameters["View"] = "recode_list"
+		parameters["Did"] = d.ID
 		h.HTML(c, http.StatusOK, parameters)
 		return
 	}
 
-	h.apiGetRecodes(c)
+	l := c.DefaultQuery("limit", "10")
+	o := c.DefaultQuery("offset", "0")
+
+	limit, _ := strconv.ParseInt(l, 10, 64)
+	offset, _ := strconv.ParseInt(o, 10, 64)
+
+	rs, err := h.ws.db.GetRecodes(d.ID, int(offset), int(limit))
+	if err != nil {
+		c.JSON(http.StatusOK, JsonMap{
+			"code": CodeDBError,
+			"msg":  "get recodes failed: " + err.Error(),
+		})
+		return
+	}
+
+	res := JsonMap{}
+	res["domainID"] = d.ID
+	res["domainName"] = d.DomainName
+
+	recodesJson := []map[string]interface{}{}
+	for _, r := range rs {
+		rJson := map[string]interface{}{}
+		rJson["id"] = r.ID
+		rJson["host"] = r.RecordHost
+		rJson["type"] = r.RecordType
+		rJson["value"] = r.RecodeValue
+		rJson["ttl"] = r.TTL
+		rJson["dynamic"] = r.Dynamic
+		if r.UpdateKey.Valid {
+			rJson["key"] = r.UpdateKey.String
+		}
+
+		recodesJson = append(recodesJson, rJson)
+	}
+	res["recodes"] = recodesJson
+	res["code"] = CodeOK
+
+	c.JSON(http.StatusOK, res)
 }
 
-// newRecode -> [POST] :/recodes
+// newRecode -> [POST] :/domain/:did/recodes
 //
 // Ret Code:[200]
 //
@@ -278,21 +465,26 @@ func (h *handler) getRecodes(c *gin.Context) {
 //
 func (h *handler) newRecode(c *gin.Context) {
 
-	recode := createRecodeFromForm(c)
-	if len(recode.RecordName) == 0 {
-		res := map[string]interface{}{}
-		res["code"] = CodeInvalidParam
-		res["msg"] = "recode name can't be empty"
-		c.JSON(http.StatusOK, res)
+	d, err := h.getDomainFromParam(c)
+	if err != nil {
 		return
 	}
 
-	_, err := h.ws.db.FindByName(recode.RecordName)
+	recode := createRecodeFromForm(c)
+	if len(recode.RecordHost) == 0 {
+		c.JSON(http.StatusOK, JsonMap{
+			"code": CodeInvalidParam,
+			"msg":  "recode name can't be empty",
+		})
+		return
+	}
+
+	_, err = h.ws.db.FindByName(d.ID, recode.RecordHost)
 	if err == nil {
-		res := map[string]interface{}{}
-		res["code"] = CodeRecodeExist
-		res["msg"] = "recode [" + recode.RecordName + "] exist"
-		c.JSON(http.StatusOK, res)
+		c.JSON(http.StatusOK, JsonMap{
+			"code": CodeRecodeExist,
+			"msg":  "recode [" + recode.RecordHost + "] exist",
+		})
 		return
 	}
 
@@ -301,22 +493,22 @@ func (h *handler) newRecode(c *gin.Context) {
 		recode.UpdateKey.String = uuid.New().String()
 	}
 
-	_, err = h.ws.db.CreateRecode(recode)
+	_, err = h.ws.db.NewRecode(d.ID, recode)
 	if err != nil {
-		res := map[string]interface{}{}
-		res["code"] = CodeUnknowError
-		res["msg"] = err.Error()
-		c.JSON(http.StatusOK, res)
+		c.JSON(http.StatusOK, JsonMap{
+			"code": CodeUnknowError,
+			"msg":  err.Error()})
 		return
 	}
 
-	res := map[string]interface{}{}
-	res["code"] = CodeOK
-	res["name"] = recode.RecordName
+	res := JsonMap{
+		"code": CodeOK,
+		"name": recode.RecordHost,
+		"id":   recode.ID,
+	}
 	if recode.UpdateKey.Valid {
 		res["key"] = recode.UpdateKey.String
 	}
-	res["id"] = recode.ID
 
 	c.JSON(http.StatusOK, res)
 }
@@ -325,7 +517,7 @@ func (h *handler) getRecode(c *gin.Context) {
 	c.Redirect(http.StatusFound, "/html/index.html")
 }
 
-// updateRecode -> [PATCH] :/recode/:id
+// updateRecode -> [PATCH] :/recode/:rid
 //
 // Ret Code:[200]
 //
@@ -347,7 +539,7 @@ func (h *handler) updateRecode(c *gin.Context) {
 		return
 	}
 
-	r.RecordName = c.DefaultPostForm("name", r.RecordName)
+	r.RecordHost = c.DefaultPostForm("name", r.RecordHost)
 	def := "false"
 	if r.Dynamic {
 		def = "true"
@@ -364,7 +556,7 @@ func (h *handler) updateRecode(c *gin.Context) {
 		r.TTL = 600
 	}
 
-	err = h.ws.db.UpdateRecode(r)
+	err = h.ws.db.UpdateRecode(r.ID, r)
 	if err != nil {
 		h.rspError(c, err)
 	} else {
