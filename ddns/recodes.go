@@ -15,7 +15,7 @@ import (
 )
 
 type recodeValue struct {
-	ip  string
+	val string
 	ttl int
 }
 
@@ -26,7 +26,8 @@ type DBRecodes struct {
 	db data.IDatabase
 
 	sync.RWMutex
-	cache        map[string]recodes //map[domain]recodes
+	cache        map[string]recodes     //map[domain]recodes
+	rcache       map[string]recodeValue //map[ip.in-addr.arpa.]domain
 	cacheVersion int64
 }
 
@@ -57,9 +58,9 @@ func (d *DBRecodes) Get(domain string, qtype uint16) ([]net.IP, int, bool) {
 		case dns.TypeA, dns.TypeAAAA:
 			if r, e := d["@"]; e {
 				if v, e := r[qtype]; e {
-					ip := net.ParseIP(v.ip)
+					ip := net.ParseIP(v.val)
 					if ip == nil {
-						log.Error("invalid ip [%v], type [%v]", v.ip, qtype)
+						log.Error("invalid ip [%v], type [%v]", v.val, qtype)
 						return nil, 0, false
 					}
 					if qtype == dns.TypeA {
@@ -81,6 +82,18 @@ func (d *DBRecodes) Get(domain string, qtype uint16) ([]net.IP, int, bool) {
 	return nil, 0, false
 }
 
+func (d *DBRecodes) ReverseGet(name string) (string, int, bool) {
+
+	d.RLock()
+	defer d.RUnlock()
+
+	if v, b := d.rcache[dns.Fqdn(name)]; b {
+		return v.val, v.ttl, true
+	}
+
+	return "", 0, false
+}
+
 func (d *DBRecodes) update() {
 
 	if d.cacheVersion == d.db.GetVersion() {
@@ -93,6 +106,7 @@ func (d *DBRecodes) update() {
 		return
 	}
 
+	rcache := map[string]recodeValue{}
 	cache := map[string]recodes{}
 	for _, domain := range ds {
 		recodes, err := d.db.GetRecodes(domain.ID, 0, -1)
@@ -103,14 +117,31 @@ func (d *DBRecodes) update() {
 
 		rc := map[string]recode{}
 		for _, r := range recodes {
-			v := recodeValue{ip: r.RecodeValue, ttl: r.TTL}
+			v := recodeValue{val: r.RecodeValue, ttl: r.TTL}
 			if v.ttl <= 0 {
 				v.ttl = 600
 			}
+
 			if r.RecordType == model.A {
 				rc[r.RecordHost] = recode{dns.TypeA: v}
 			} else if r.RecordType == model.AAAA {
 				rc[r.RecordHost] = recode{dns.TypeAAAA: v}
+			}
+
+			raddr, err := dns.ReverseAddr(r.RecodeValue)
+			if err != nil {
+				log.Error("get revers addr failed: %v", err)
+			} else {
+				if _, b := rcache[raddr]; b {
+					log.Warn("revers recode [%v] already exist", raddr)
+				} else {
+					dname := domain.DomainName
+					if r.RecordHost != "@" {
+						dname = r.RecordHost + "." + dname
+					}
+
+					rcache[raddr] = recodeValue{val: dname, ttl: r.TTL}
+				}
 			}
 		}
 		cache[domain.DomainName] = rc
@@ -119,6 +150,7 @@ func (d *DBRecodes) update() {
 	d.Lock()
 	defer d.Unlock()
 	d.cache = cache
+	d.rcache = rcache
 	d.cacheVersion = d.db.GetVersion()
 }
 

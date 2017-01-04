@@ -3,11 +3,13 @@ package ddns
 import (
 	"errors"
 	"net"
+	"strings"
 	"time"
 
 	"github.com/inimei/backup/log"
 	"github.com/inimei/ddns/config"
 	"github.com/inimei/ddns/data"
+	"github.com/inimei/ddns/errs"
 	"github.com/miekg/dns"
 )
 
@@ -118,7 +120,7 @@ func (h *DDNSHandler) do(netType NetType, w dns.ResponseWriter, req *dns.Msg) {
 		return
 	}
 
-	Q := Question{UnFqdn(q.Name), dns.TypeToString[q.Qtype], dns.ClassToString[q.Qclass]}
+	Q := Question{strings.ToLower(UnFqdn(q.Name)), dns.TypeToString[q.Qtype], dns.ClassToString[q.Qclass]}
 
 	var remote net.IP
 	if netType == NetTCP {
@@ -163,10 +165,24 @@ func (h *DDNSHandler) do(netType NetType, w dns.ResponseWriter, req *dns.Msg) {
 		w.WriteMsg(m)
 	}
 
+	key := KeyGen(Q)
+
 	//
 	//	query in database
 	//
 	if h.dbrecodes != nil {
+		if q.Qtype == dns.TypePTR && strings.HasSuffix(Q.qname, ".in-addr.arpa") || strings.HasSuffix(Q.qname, ".ip6.arpa") {
+			resp := h.ServeDNSReverse(w, req)
+			if resp != nil {
+				err := h.cache.Set(key, resp)
+				if err != nil {
+					log.Error(err.Error())
+				}
+			}
+
+			return
+		}
+
 		if ips, ttl, ok := h.dbrecodes.Get(Q.qname, q.Qtype); ok {
 			rspByIps(ips, uint32(ttl))
 			log.Debug("%s found in database", Q.String())
@@ -190,7 +206,6 @@ func (h *DDNSHandler) do(netType NetType, w dns.ResponseWriter, req *dns.Msg) {
 	//
 	// query in cache
 	//
-	key := KeyGen(Q)
 	if IPQuery > 0 {
 		mesg, err := h.cache.Get(key)
 		if err != nil {
@@ -242,6 +257,42 @@ func (h *DDNSHandler) do(netType NetType, w dns.ResponseWriter, req *dns.Msg) {
 		}
 		log.Debug("Insert %s into cache", Q.String())
 	}
+}
+
+// ServeDNSReverse is the handler for DNS requests for the reverse zone. If nothing is found
+// locally the request is forwarded to the forwarder for resolution.
+func (s *DDNSHandler) ServeDNSReverse(w dns.ResponseWriter, req *dns.Msg) *dns.Msg {
+	m := new(dns.Msg)
+	m.SetReply(req)
+	m.Compress = true
+	m.Authoritative = false // Set to false, because I don't know what to do wrt DNSSEC.
+	m.RecursionAvailable = true
+	var err error
+	if m.Answer, err = s.PTRRecords(req.Question[0]); err == nil {
+		// TODO Reverse DNSSEC. We should sign this, but requires a key....and more
+		// Probably not worth the hassle?
+		if err := w.WriteMsg(m); err != nil {
+			log.Error("failure to return reply %q", err)
+		}
+		return m
+	}
+
+	return nil
+}
+func (h *DDNSHandler) PTRRecords(q dns.Question) (records []dns.RR, err error) {
+	name := strings.ToLower(q.Name)
+	if h.dbrecodes != nil {
+		d, ttl, exist := h.dbrecodes.ReverseGet(name)
+		if !exist {
+			return nil, errs.ErrPtrRecodeNotFound
+		}
+
+		ptr := &dns.PTR{Hdr: dns.RR_Header{Name: name, Rrtype: dns.TypePTR, Class: dns.ClassINET, Ttl: uint32(ttl)}, Ptr: dns.Fqdn(d)}
+		records = append(records, ptr)
+		return records, nil
+	}
+
+	return nil, errs.ErrPtrRecodeNotFound
 }
 
 func (h *DDNSHandler) DoTCP(w dns.ResponseWriter, req *dns.Msg) {
