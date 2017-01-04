@@ -105,7 +105,7 @@ func (s *SqliteDB) FindByKey(key string) (*model.Recode, error) {
 func (s *SqliteDB) ClearRecodes(bSynced bool) error {
 	db := s.db
 	if bSynced {
-		db = db.Where("key = ?", true)
+		db = db.Where("synced = ?", true)
 	}
 	return db.Delete(&model.Recode{}).Error
 }

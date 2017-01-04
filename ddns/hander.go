@@ -130,6 +130,27 @@ func (h *DDNSHandler) do(netType NetType, w dns.ResponseWriter, req *dns.Msg) {
 	}
 	log.Info("%s lookup　%s", remote, Q.String())
 
+	//
+	// query in cache
+	//
+	key := KeyGen(Q)
+	mesg, err := h.cache.Get(key)
+	if err != nil {
+		if mesg, err = h.negCache.Get(key); err != nil {
+			log.Debug("%s didn't hit cache", Q.String())
+		} else {
+			log.Debug("%s hit negative cache", Q.String())
+			dns.HandleFailed(w, req)
+			return
+		}
+	} else {
+		log.Debug("%s hit cache", Q.String())
+		// we need this copy against concurrent modification of Id
+		msg := *mesg
+		msg.Id = req.Id
+		w.WriteMsg(&msg)
+		return
+	}
 	IPQuery := h.isIPQuery(q)
 
 	rspByIps := func(ips []net.IP, ttl uint32) {
@@ -164,8 +185,6 @@ func (h *DDNSHandler) do(netType NetType, w dns.ResponseWriter, req *dns.Msg) {
 
 		w.WriteMsg(m)
 	}
-
-	key := KeyGen(Q)
 
 	//
 	//	query in database
@@ -204,33 +223,8 @@ func (h *DDNSHandler) do(netType NetType, w dns.ResponseWriter, req *dns.Msg) {
 	}
 
 	//
-	// query in cache
-	//
-	if IPQuery > 0 {
-		mesg, err := h.cache.Get(key)
-		if err != nil {
-			if mesg, err = h.negCache.Get(key); err != nil {
-				log.Debug("%s didn't hit cache", Q.String())
-			} else {
-				log.Debug("%s hit negative cache", Q.String())
-				dns.HandleFailed(w, req)
-				return
-			}
-		} else {
-			log.Debug("%s hit cache", Q.String())
-			// we need this copy against concurrent modification of Id
-			msg := *mesg
-			msg.Id = req.Id
-			w.WriteMsg(&msg)
-			return
-		}
-	}
-
-	//
 	//	external resolution
 	//
-	var err error
-	var mesg *dns.Msg
 	if config.Data.Resolv.Enable {
 		mesg, err = h.resolver.Lookup(netType, req)
 	} else {
