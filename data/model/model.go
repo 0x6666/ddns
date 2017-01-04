@@ -52,6 +52,7 @@ type Domain struct {
 
 	DomainName string   `gorm:"column:domain_name;unique_index"`
 	Recodes    []Recode `gorm:"ForeignKey:DomainID"`
+	Synced     bool     `gorm:"column:synced;default:'false'"` //for slave
 }
 
 func (Domain) TableName() string {
