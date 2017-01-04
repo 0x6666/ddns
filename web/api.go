@@ -99,7 +99,9 @@ func (h *handler) apiGetRecodes(c *gin.Context) {
 				rJson["name"] = r.RecordHost
 				rJson["ttl"] = r.TTL
 				rJson["dynamic"] = r.Dynamic
-				rJson["key"] = r.UpdateKey
+				if r.UpdateKey.Valid {
+					rJson["key"] = r.UpdateKey.String
+				}
 
 				recodesJson = append(recodesJson, rJson)
 			}

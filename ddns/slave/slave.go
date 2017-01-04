@@ -203,7 +203,7 @@ func (ss *SlaveServer) getRecodes() ([]recode, error) {
 			ID      int64    `json:"id"`
 			Domain  string   `json:"domain"`
 			Recodes []recode `json:"recodes"`
-		} `json:"recodes"`
+		} `json:"domains"`
 	}{}
 
 	err = json.Unmarshal(bodyData, &data)
@@ -217,6 +217,8 @@ func (ss *SlaveServer) getRecodes() ([]recode, error) {
 		log.Error(err.Error())
 		return nil, err
 	}
+
+	log.Info("no data for sync...")
 
 	rs := []recode{}
 	for _, d := range data.Domains {
