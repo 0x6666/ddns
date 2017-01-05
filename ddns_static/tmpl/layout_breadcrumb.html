@@ -1,0 +1,15 @@
+{{define "layout_breadcrumb"}}
+<div id="crumbs">
+	<ul>
+		<li><a href="/">DDNS</a></li>
+
+		{{range $idx, $item := .BreadcrumbSecs}}
+		<li>
+			{{if len $item.Href }}
+			<a href="{{$item.Href}}">{{$item.Name}}</a> {{else}}
+			<span>{{$item.Name}}</span> {{end}}
+		</li>
+		{{end}}
+	</ul>
+</div>
+{{end}}

@@ -15,6 +15,13 @@ import (
 
 type JsonMap map[string]interface{}
 
+type SectionItem struct {
+	Name string
+	Href string
+}
+
+type SectionItems []*SectionItem
+
 func (h *handler) rspOk(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{
 		"code": CodeOK,

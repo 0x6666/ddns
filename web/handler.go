@@ -135,6 +135,10 @@ func (h *handler) getLogin(c *gin.Context) {
 //
 func (h *handler) getAbout(c *gin.Context) {
 	parameters := h.getTemplateParameter(c)
+
+	parameters["BreadcrumbSecs"] = SectionItems{
+		&SectionItem{"About", "/about"},
+	}
 	parameters["View"] = "view_about"
 	h.HTML(c, http.StatusOK, parameters)
 	return
@@ -193,6 +197,10 @@ func (h *handler) login(c *gin.Context) {
 func (h *handler) getDomains(c *gin.Context) {
 	if t := requestType(c.Request); t != MIMEJSON {
 		parameters := h.getTemplateParameter(c)
+		parameters["BreadcrumbSecs"] = SectionItems{
+			&SectionItem{"Domain", "/domains"},
+		}
+
 		parameters["View"] = "domains_view"
 		h.HTML(c, http.StatusOK, parameters)
 		return
@@ -401,6 +409,10 @@ func (h *handler) getRecodes(c *gin.Context) {
 	d, _ := h.getDomainFromParam(c)
 	if t := requestType(c.Request); t != MIMEJSON {
 		parameters := h.getTemplateParameter(c)
+		parameters["BreadcrumbSecs"] = SectionItems{
+			&SectionItem{"Domain", "/domains"},
+			&SectionItem{"Recode", fmt.Sprintf("/domain/%v/recodes", d.ID)},
+		}
 		parameters["View"] = "recode_list"
 		parameters["Did"] = d.ID
 		h.HTML(c, http.StatusOK, parameters)

@@ -135,6 +135,9 @@
 		function formatType(value, row, index) {
 			return type_to_str(value);
 		}
+		function formatDynamic(value, row, index) {
+			return '<input class="dynamic" type="checkbox" checked="' + (value === true ? 'checked' : 'unchecked') + '"/>';
+		}
 
 		function initTable() {
 			$table.bootstrapTable({
@@ -146,6 +149,7 @@
 							field: 'id',
 							align: 'center',
 							valign: 'middle',
+							visible: false,
 							//sortable: true,
 							footerFormatter: totalTextFormatter
 						}, {
@@ -179,13 +183,20 @@
 							field: 'dynamic',
 							title: 'Dynamic',
 							//sortable: true,
-							editable: true,
+							//editable: true,
 							footerFormatter: totalNameFormatter,
-							align: 'center'
+							align: 'center',
+							formatter: formatDynamic,
+							events: {
+								'click .dynamic': function (e, value, row, index) {
+									row.dynamic = !value;
+								}
+							}
 						}, {
 							field: 'key',
 							title: 'Update Key',
 							align: 'center',
+							visible: false,
 						}, {
 							field: 'operate',
 							title: 'Operate',
@@ -279,7 +290,7 @@
 		}
 		function operateFormatter(value, row, index) {
 			return [
-				'<a class="save" href="javascript:void(0)" title="Like">',
+				'<a class="save" href="javascript:void(0)" title="Save">',
 				'<i class="	glyphicon glyphicon-saved"></i>',
 				'</a>',
 				'<a class="remove" href="javascript:void(0)" title="Remove">',
