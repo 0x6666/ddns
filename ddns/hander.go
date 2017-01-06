@@ -193,13 +193,14 @@ func (h *DDNSHandler) do(netType NetType, w dns.ResponseWriter, req *dns.Msg) {
 		if q.Qtype == dns.TypePTR && strings.HasSuffix(Q.qname, ".in-addr.arpa") || strings.HasSuffix(Q.qname, ".ip6.arpa") {
 			resp := h.ServeDNSReverse(w, req)
 			if resp != nil {
-				err := h.cache.Set(key, resp)
-				if err != nil {
-					log.Error(err.Error())
-				}
+				/*
+					err := h.cache.Set(key, resp)
+					if err != nil {
+						log.Error(err.Error())
+					}
+				*/
+				return
 			}
-
-			return
 		}
 
 		if ips, ttl, ok := h.dbrecodes.Get(Q.qname, q.Qtype); ok {

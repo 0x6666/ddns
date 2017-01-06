@@ -83,7 +83,14 @@ func (c *MemoryCache) Set(key string, msg *dns.Msg) error {
 		return CacheIsFull{}
 	}
 
-	expire := time.Now().Add(c.Expire)
+	var expire time.Time
+	if msg != nil && len(msg.Answer) > 0 && msg.Answer[0].Header() != nil {
+		h := msg.Answer[0].Header()
+		expire = time.Now().Add(time.Duration(h.Ttl) * time.Second)
+	} else {
+		expire = time.Now().Add(c.Expire)
+	}
+
 	mesg := Mesg{msg, expire}
 	c.mu.Lock()
 	c.Backend[key] = mesg

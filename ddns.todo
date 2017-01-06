@@ -3,3 +3,8 @@
 ✔ API: update @done (11/28/2016, 10:59:57 PM)
 ✔ Recode type @done (1/5/2017, 7:54:59 PM)
 ☐ db upgrade
+☐ Logout & Redirect
+☐ File Dowload
+☐ redis
+☐ mysql
+✔ cache ttl @done (1/6/2017, 9:52:23 PM)
