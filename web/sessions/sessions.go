@@ -3,15 +3,53 @@ package sessions
 import (
 	"net/http"
 
+	"github.com/boj/redistore"
+	"github.com/gorilla/sessions"
+	"github.com/inimei/ddns/config"
 	"github.com/inimei/ddns/errs"
 	"github.com/inimei/ddns/web/sessions/memstore"
 )
 
-var store = memstore.NewMemStore([]byte("i don't know"))
+var store sessions.Store
 
 const (
+	secretKey  = "DDNS-secret-key"
 	CookieName = "ddns_sid"
 )
+
+func init() {
+	o := &sessions.Options{
+		Path:     "/",
+		Domain:   "",
+		MaxAge:   config.Data.Session.Maxage,
+		Secure:   true,
+		HttpOnly: false,
+	}
+
+	switch config.Data.Session.Backend {
+	case "memery":
+		s := memstore.NewMemStore([]byte(secretKey))
+		s.Options = o
+		store = s
+	case "redis":
+		s, err := redistore.NewRediStoreWithDB(
+			10,
+			"tcp",
+			config.Data.Redis.Host,
+			config.Data.Redis.Passwd,
+			"0",
+			[]byte(secretKey))
+
+		if err != nil {
+			panic(err)
+		}
+
+		s.Options = o
+		store = s
+	default:
+		panic("invalid session backend: " + config.Data.Session.Backend)
+	}
+}
 
 // Login ...
 func Login(w http.ResponseWriter, r *http.Request, userid int64) error {

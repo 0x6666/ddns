@@ -19,6 +19,10 @@ admin="yangsong@yangsong.site"
 passwd="94f717fb79f5ea8b5dff0affbbdfdacd8335fbc2"  #sha1
 assets_image_host="https://ohgdnd9lh.qnssl.com"
 
+[session]
+backend="memery" # redis
+maxage=172800 # second
+
 [sqlite]
 path="data.db"
 

@@ -58,19 +58,25 @@ type WebSetting struct {
 	AssetsImageHost string `toml:"assets_image_host"`
 }
 
+type SessionSetting struct {
+	Backend string `toml:"backend"`
+	Maxage  int    `toml:"maxage"`
+}
+
 type SqliteSetting struct {
 	Path string `toml:"path"`
 }
 
 type cfgData struct {
-	Server ServerSetting  `toml:"server"`
-	Slave  SlaveSetting   `toml:"slave"`
-	Web    WebSetting     `toml:"web"`
-	Sqlite SqliteSetting  `toml:"sqlite"`
-	Cache  CacheSettings  `toml:"cache"`
-	Resolv ResolvSettings `toml:"resolv"`
-	Hosts  HostsSettings  `toml:"hosts"`
-	Redis  RedisSettings  `toml:"redis"`
+	Server  ServerSetting  `toml:"server"`
+	Slave   SlaveSetting   `toml:"slave"`
+	Web     WebSetting     `toml:"web"`
+	Sqlite  SqliteSetting  `toml:"sqlite"`
+	Cache   CacheSettings  `toml:"cache"`
+	Resolv  ResolvSettings `toml:"resolv"`
+	Hosts   HostsSettings  `toml:"hosts"`
+	Redis   RedisSettings  `toml:"redis"`
+	Session SessionSetting `toml:"session"`
 }
 
 var Data cfgData
