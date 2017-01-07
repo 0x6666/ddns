@@ -48,8 +48,7 @@ func (r *Resolver) Lookup(netType NetType, req *dns.Msg) (message *dns.Msg, err 
 		defer wg.Done()
 		r, rtt, err := c.Exchange(req, nameserver)
 		if err != nil {
-			log.Warn("%s socket error on %s", qname, nameserver)
-			log.Warn("error:%s", err.Error())
+			log.Warn("%s socket error on %s : %v ", qname, nameserver, err.Error())
 			return
 		}
 		// If SERVFAIL happen, should return immediately and try another upstream resolver.
@@ -62,7 +61,7 @@ func (r *Resolver) Lookup(netType NetType, req *dns.Msg) (message *dns.Msg, err 
 				return
 			}
 		} else {
-			log.Warn("%s resolv on %s (%s) ttl: %d", UnFqdn(qname), nameserver, net, rtt)
+			log.Info("%s resolv on %s (%s) ttl: %v", UnFqdn(qname), nameserver, net, int64(rtt/time.Second))
 		}
 		select {
 		case res <- r:
