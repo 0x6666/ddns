@@ -1,22 +1,24 @@
 package ddns
 
 import (
-	"crypto/md5"
-	"encoding/json"
-	"fmt"
+	"bytes"
+	"encoding/base64"
+	"encoding/gob"
 	"sync"
 	"time"
 
-	"github.com/hoisie/redis"
+	"github.com/inimei/backup/log"
+	"github.com/inimei/ddns/ddns/container"
 	"github.com/miekg/dns"
 )
 
-type KeyNotFound struct {
-	key string
-}
+const (
+	nodata = "nodata"
+)
 
-func (e KeyNotFound) Error() string {
-	return e.key + " " + "not found"
+func init() {
+	gob.Register((*dns.Msg)(nil))
+	gob.Register((*dns.A)(nil))
 }
 
 type KeyExpired struct {
@@ -25,6 +27,14 @@ type KeyExpired struct {
 
 func (e KeyExpired) Error() string {
 	return e.Key + " " + "expired"
+}
+
+type KeyNotFound struct {
+	Key string
+}
+
+func (e KeyNotFound) Error() string {
+	return e.Key + " " + "key not found"
 }
 
 type CacheIsFull struct {
@@ -75,7 +85,6 @@ func (c *MemoryCache) Get(key string) (*dns.Msg, error) {
 	}
 
 	return mesg.Msg, nil
-
 }
 
 func (c *MemoryCache) Set(key string, msg *dns.Msg) error {
@@ -125,47 +134,114 @@ func (c *MemoryCache) Full() bool {
 	return c.Length() >= c.Maxcount
 }
 
-/*
-TODO: Redis cache Backend
-*/
-
 type RedisCache struct {
-	Backend    *redis.Client
-	Serializer JsonSerializer
-	Expire     time.Duration
-	Maxcount   int
+	Backend  container.Container
+	Expire   time.Duration
+	Maxcount int
 }
 
-func (c *RedisCache) Get() {
+func (c *RedisCache) Get(key string) (*dns.Msg, error) {
 
+	data, err := c.Backend.Get(key)
+	if err != nil {
+		return nil, err
+	}
+
+	if data == nodata {
+		return nil, nil
+	}
+
+	if len(data) == 0 {
+		return nil, KeyNotFound{key}
+	}
+
+	msg, err := c.decode(data)
+	if err != nil {
+		log.Error(err.Error())
+		return nil, err
+	}
+
+	return msg, nil
 }
 
-func (c *RedisCache) Set() {
+func (c *RedisCache) Set(key string, msg *dns.Msg) error {
 
+	var expire int64
+	if msg != nil && len(msg.Answer) > 0 && msg.Answer[0].Header() != nil {
+		expire = int64(msg.Answer[0].Header().Ttl)
+	} else {
+		expire = int64(c.Expire / time.Second)
+	}
+
+	var err error
+	val := nodata
+	if msg != nil {
+		val, err = c.encode(msg)
+		if err != nil {
+			return err
+		}
+	}
+
+	err = c.Backend.Set(key, val, expire)
+	if err != nil {
+		log.Error(err.Error())
+		return err
+	}
+	return nil
 }
 
-func (c *RedisCache) Remove() {
-
+func (c *RedisCache) Remove(key string) {
+	err := c.Backend.Delete(key)
+	if err != nil {
+		log.Error(err.Error())
+	}
 }
 
-func KeyGen(q Question) string {
-	h := md5.New()
-	h.Write([]byte(q.String()))
-	x := h.Sum(nil)
-	key := fmt.Sprintf("%x", x)
-	return key
+func (c *RedisCache) Exists(key string) bool {
+	return c.Backend.IsExist(key)
 }
 
-type JsonSerializer struct {
+func (c *RedisCache) Length() int {
+	len, err := c.Backend.Count()
+	if err != nil {
+		log.Error(err.Error())
+		return 0
+	}
+	return int(len)
 }
 
-func (*JsonSerializer) Dumps(mesg *dns.Msg) (encoded []byte, err error) {
-	encoded, err = json.Marshal(mesg)
-	return
+func (c *RedisCache) encode(msg *dns.Msg) (string, error) {
+	buf := bytes.NewBuffer(nil)
+	enc := gob.NewEncoder(buf)
+	err := enc.Encode(msg)
+	if err != nil {
+		log.Error("encode msg [%v] failed: %v", msg, err)
+		return "", err
+	}
+
+	data := buf.Bytes()
+	encoded := make([]byte, base64.URLEncoding.EncodedLen(len(data)))
+	base64.URLEncoding.Encode(encoded, data)
+	return string(encoded), nil
 }
 
-func (*JsonSerializer) Loads(data []byte, mesg **dns.Msg) error {
-	err := json.Unmarshal(data, mesg)
-	return err
+func (c *RedisCache) decode(msg string) (*dns.Msg, error) {
+	value := []byte(msg)
+	decoded := make([]byte, base64.URLEncoding.DecodedLen(len(value)))
+	b, err := base64.URLEncoding.Decode(decoded, value)
+	if err != nil {
+		log.Error("decode msg failed:%v", err)
+		return nil, err
+	}
 
+	value = decoded[:b]
+	buf := bytes.NewBuffer(value)
+	dec := gob.NewDecoder(buf)
+	var out *dns.Msg
+	err = dec.Decode(&out)
+	if err != nil {
+		log.Error("decode msg failed:%v", err)
+		return nil, err
+	}
+	return out, nil
 }

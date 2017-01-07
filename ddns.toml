@@ -27,6 +27,10 @@ backend="memory"
 expire = 600  # default expire time 10 minutes
 maxcount = 100000
 
+[redis]
+host = "127.0.0.1:6379"
+passwd = ""
+
 [resolv]
 enable = true
 resolv-file="resolv.conf"

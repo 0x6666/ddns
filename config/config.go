@@ -17,6 +17,11 @@ type CacheSettings struct {
 	Maxcount int    `toml:"maxcount"`
 }
 
+type RedisSettings struct {
+	Host   string `toml:"host"`
+	Passwd string `toml:"passwd"`
+}
+
 type ResolvSettings struct {
 	Enable     bool   `toml:"enable"`
 	ResolvFile string `toml:"resolv-file"`
@@ -65,6 +70,7 @@ type cfgData struct {
 	Cache  CacheSettings  `toml:"cache"`
 	Resolv ResolvSettings `toml:"resolv"`
 	Hosts  HostsSettings  `toml:"hosts"`
+	Redis  RedisSettings  `toml:"redis"`
 }
 
 var Data cfgData

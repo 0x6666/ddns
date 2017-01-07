@@ -1,14 +1,18 @@
 package ddns
 
 import (
+	"crypto/md5"
 	"errors"
 	"net"
 	"strings"
 	"time"
 
+	"fmt"
+
 	"github.com/inimei/backup/log"
 	"github.com/inimei/ddns/config"
 	"github.com/inimei/ddns/data"
+	"github.com/inimei/ddns/ddns/container"
 	"github.com/inimei/ddns/errs"
 	"github.com/miekg/dns"
 )
@@ -25,6 +29,14 @@ const (
 	_IP4Query  = 4
 	_IP6Query  = 6
 )
+
+func KeyGen(q Question) string {
+	h := md5.New()
+	h.Write([]byte(q.String()))
+	x := h.Sum(nil)
+	key := fmt.Sprintf("%x", x)
+	return key
+}
 
 type Question struct {
 	qname  string
@@ -49,6 +61,7 @@ func NewHandler(db data.IDatabase) *DDNSHandler {
 		cacheConfig     config.CacheSettings
 		resolver        *Resolver
 		cache, negCache Cache
+		err             error
 	)
 
 	if config.Data.Resolv.Enable {
@@ -81,6 +94,28 @@ func NewHandler(db data.IDatabase) *DDNSHandler {
 			Expire:   time.Duration(cacheConfig.Expire) * time.Second / 2,
 			Maxcount: cacheConfig.Maxcount,
 		}
+	case "redis":
+		newRedisCache := func(key string, db int) (*RedisCache, error) {
+			cfg := `{ "key":"%s", "dbNum":"%v", "password": "%s", "conn":"%s", "scancount": "500"}`
+
+			ccfg := fmt.Sprintf(cfg, key, db, config.Data.Redis.Passwd, config.Data.Redis.Host)
+			c, err := container.NewContainer(container.CTRedis, ccfg)
+			if err != nil {
+				log.Error(err.Error())
+				return nil, err
+			}
+			return &RedisCache{
+				Backend: c,
+				Expire:  time.Duration(cacheConfig.Expire) * time.Second,
+			}, nil
+		}
+
+		cache, err = newRedisCache("dns_cache", 1)
+		if err != nil {
+			return nil
+		}
+
+		negCache, _ = newRedisCache("dns_negcache", 2)
 	default:
 		log.Error("Invalid cache backend %s", cacheConfig.Backend)
 		panic("Invalid cache backend")
@@ -143,7 +178,7 @@ func (h *DDNSHandler) do(netType NetType, w dns.ResponseWriter, req *dns.Msg) {
 			dns.HandleFailed(w, req)
 			return
 		}
-	} else {
+	} else if mesg != nil {
 		log.Debug("%s hit cache", Q.String())
 		// we need this copy against concurrent modification of Id
 		msg := *mesg
@@ -233,7 +268,7 @@ func (h *DDNSHandler) do(netType NetType, w dns.ResponseWriter, req *dns.Msg) {
 	}
 
 	if err != nil {
-		log.Debug("Resolve query error %s", err)
+		log.Debug("Resolve query error %s, insert to negative cache", err)
 		dns.HandleFailed(w, req)
 
 		// cache the failure, too!
