@@ -80,7 +80,7 @@
 			return type_to_str(value);
 		}
 		function formatDynamic(value, row, index) {
-			return '<input class="dynamic" type="checkbox" checked="' + (value === true ? 'checked' : 'unchecked') + '"/>';
+			return '<input class="dynamic" type="checkbox"' + (value === true ? 'checked="checked"' : '') + '"/>';
 		}
 
 		function initTable() {
