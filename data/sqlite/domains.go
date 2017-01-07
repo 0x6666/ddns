@@ -81,7 +81,7 @@ func (s *SqliteDB) DeleteDomain(domainID int64) error {
 		log.Error(err.Error())
 		return err
 	}
-
+	go s.updateVersion()
 	return nil
 }
 
@@ -151,7 +151,7 @@ func (s *SqliteDB) NewRecode(domainID int64, r *m.Recode) (int64, error) {
 	if err := s.db.Create(r).Error; err != nil {
 		return 0, err
 	}
-
+	go s.updateVersion()
 	return 0, nil
 }
 

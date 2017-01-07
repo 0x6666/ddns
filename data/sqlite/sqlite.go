@@ -107,7 +107,9 @@ func (s *SqliteDB) ClearRecodes(bSynced bool) error {
 	if bSynced {
 		db = db.Where("synced = ?", true)
 	}
-	return db.Delete(&model.Recode{}).Error
+	err := db.Delete(&model.Recode{}).Error
+	go s.updateVersion()
+	return err
 }
 
 func (s *SqliteDB) GetVersion() int64 {
@@ -150,5 +152,7 @@ func (s *SqliteDB) Rollback() error {
 }
 
 func (s *SqliteDB) Commit() error {
-	return s.db.Commit().Error
+	err := s.db.Commit().Error
+	go s.updateVersion()
+	return err
 }
