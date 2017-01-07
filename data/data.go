@@ -3,7 +3,7 @@ package data
 import "github.com/inimei/ddns/data/model"
 
 type IDomains interface {
-	NewDomain(userID int64, name string) (int64, error)
+	NewDomain(userID int64, domain *model.Domain) (int64, error)
 	UpdateDomain(domainID int64, newName string) error
 	DeleteDomain(domainID int64) error
 	GetDomain(domainID int64) (*model.Domain, error)

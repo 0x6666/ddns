@@ -85,6 +85,7 @@ func (h *handler) apiGetRecodes(c *gin.Context) {
 		dJson := map[string]interface{}{}
 		dJson["id"] = d.ID
 		dJson["domain"] = d.DomainName
+		dJson["userid"] = d.UserID
 
 		recodes, err := h.ws.db.GetRecodes(d.ID, 0, -1)
 		if err != nil {

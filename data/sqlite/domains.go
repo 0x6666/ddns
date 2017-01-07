@@ -8,16 +8,14 @@ import (
 	"github.com/inimei/ddns/errs"
 )
 
-func (s *SqliteDB) NewDomain(userID int64, name string) (int64, error) {
+func (s *SqliteDB) NewDomain(userID int64, d *m.Domain) (int64, error) {
 
-	n := strings.ToLower(name)
+	d.DomainName = strings.ToLower(d.DomainName)
 
-	var d m.Domain
-	if err := s.db.First(&d, "domain_name = ?", n).Error; err == nil {
+	if err := s.db.First(&d, "domain_name = ?", d.DomainName).Error; err == nil {
 		return -1, errs.ErrDomianExist
 	}
 
-	d.DomainName = n
 	d.UserID = userID
 	if err := s.db.Create(&d).Error; err != nil {
 		return 0, err

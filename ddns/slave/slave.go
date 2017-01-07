@@ -38,6 +38,7 @@ type recode struct {
 	Ttl     int              `json:"ttl"`
 	Key     string           `json:"key"`
 	domian  string
+	userid  int64
 }
 
 func (ss *SlaveServer) Init(db data.IDatabase) error {
@@ -146,8 +147,18 @@ func (ss *SlaveServer) checkUpdate(force bool) {
 	for _, r := range recodes {
 		d, err := db.FindDomainByName(r.domian)
 		if err != nil {
-			log.Error("find domain [%v] failed: %v", r.domian, err)
-			continue
+			log.Warn("find domain [%v] failed: %v", r.domian, err)
+
+			d = &model.Domain{}
+			d.Synced = true
+			d.DomainName = r.domian
+
+			id, err := db.NewDomain(r.userid, d)
+			if err != nil {
+				log.Error(err.Error())
+				continue
+			}
+			d.UserID = id
 		}
 
 		_r := model.Recode{}
@@ -202,6 +213,7 @@ func (ss *SlaveServer) getRecodes() ([]recode, error) {
 		Domains []struct {
 			ID      int64    `json:"id"`
 			Domain  string   `json:"domain"`
+			UserID  int64    `json:"userid"`
 			Recodes []recode `json:"recodes"`
 		} `json:"domains"`
 	}{}
@@ -225,6 +237,7 @@ func (ss *SlaveServer) getRecodes() ([]recode, error) {
 		_rs := []recode{}
 		for _, r := range d.Recodes {
 			r.domian = d.Domain
+			r.userid = d.UserID
 			_rs = append(_rs, r)
 		}
 		rs = append(rs, _rs...)
