@@ -11,6 +11,7 @@ import (
 	"github.com/miekg/dns"
 )
 
+//ResolvError ...
 type ResolvError struct {
 	qname, net  string
 	nameservers []string
@@ -21,6 +22,7 @@ func (e ResolvError) Error() string {
 	return errmsg
 }
 
+//Resolver ...
 type Resolver struct {
 	config *dns.ClientConfig
 }
@@ -61,7 +63,7 @@ func (r *Resolver) Lookup(netType NetType, req *dns.Msg) (message *dns.Msg, err 
 				return
 			}
 		} else {
-			log.Info("%s resolv on %s (%s) ttl: %v", UnFqdn(qname), nameserver, net, int64(rtt/time.Second))
+			log.Info("%s resolv on %s (%s) time: %v", UnFqdn(qname), nameserver, net, rtt)
 		}
 		select {
 		case res <- r:
@@ -94,7 +96,7 @@ func (r *Resolver) Lookup(netType NetType, req *dns.Msg) (message *dns.Msg, err 
 
 }
 
-// Namservers return the array of nameservers, with port number appended.
+// Nameservers return the array of nameservers, with port number appended.
 // '#' in the name is treated as port separator, as with dnsmasq.
 func (r *Resolver) Nameservers() (ns []string) {
 	for _, server := range r.config.Servers {
@@ -108,6 +110,7 @@ func (r *Resolver) Nameservers() (ns []string) {
 	return
 }
 
+// Timeout ...
 func (r *Resolver) Timeout() time.Duration {
 	return time.Duration(r.config.Timeout) * time.Second
 }
