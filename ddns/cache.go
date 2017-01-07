@@ -19,6 +19,7 @@ const (
 func init() {
 	gob.Register((*dns.Msg)(nil))
 	gob.Register((*dns.A)(nil))
+	gob.Register((*dns.AAAA)(nil))
 }
 
 type KeyExpired struct {
