@@ -10,4 +10,6 @@ var (
 	ErrDomianExist       = errors.New("domain already exist")
 	ErrInvalidSession    = errors.New("invalid session")
 	ErrPtrRecodeNotFound = errors.New("ptr recode not found")
+
+	ErrKeyNotFound = errors.New("key not found")
 )

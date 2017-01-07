@@ -5,14 +5,12 @@ import (
 	"errors"
 	"net"
 	"strings"
-	"time"
 
 	"fmt"
 
 	"github.com/inimei/backup/log"
 	"github.com/inimei/ddns/config"
 	"github.com/inimei/ddns/data"
-	"github.com/inimei/ddns/ddns/container"
 	"github.com/inimei/ddns/errs"
 	"github.com/miekg/dns"
 )
@@ -84,38 +82,20 @@ func NewHandler(db data.IDatabase) *DDNSHandler {
 	cacheConfig = config.Data.Cache
 	switch cacheConfig.Backend {
 	case "memory":
-		cache = &MemoryCache{
-			Backend:  make(map[string]Mesg, cacheConfig.Maxcount),
-			Expire:   time.Duration(cacheConfig.Expire) * time.Second,
-			Maxcount: cacheConfig.Maxcount,
-		}
-		negCache = &MemoryCache{
-			Backend:  make(map[string]Mesg),
-			Expire:   time.Duration(cacheConfig.Expire) * time.Second / 2,
-			Maxcount: cacheConfig.Maxcount,
-		}
+		cache, _ = NewMemCache(cacheConfig.Expire)
+		negCache, _ = NewMemCache(cacheConfig.Expire)
 	case "redis":
-		newRedisCache := func(key string, db int) (*RedisCache, error) {
-			cfg := `{ "key":"%s", "dbNum":"%v", "password": "%s", "conn":"%s", "scancount": "500"}`
-
-			ccfg := fmt.Sprintf(cfg, key, db, config.Data.Redis.Passwd, config.Data.Redis.Host)
-			c, err := container.NewContainer(container.CTRedis, ccfg)
-			if err != nil {
-				log.Error(err.Error())
-				return nil, err
-			}
-			return &RedisCache{
-				Backend: c,
-				Expire:  time.Duration(cacheConfig.Expire) * time.Second,
-			}, nil
-		}
-
-		cache, err = newRedisCache("dns_cache", 1)
+		cache, err = NewRedisCache("dns_cache", 1, cacheConfig.Expire)
 		if err != nil {
+			log.Error(err.Error())
 			return nil
 		}
 
-		negCache, _ = newRedisCache("dns_negcache", 2)
+		negCache, _ = NewRedisCache("dns_negcache", 2, cacheConfig.Expire)
+		if err != nil {
+			log.Error(err.Error())
+			return nil
+		}
 	default:
 		log.Error("Invalid cache backend %s", cacheConfig.Backend)
 		panic("Invalid cache backend")

@@ -4,11 +4,13 @@ import (
 	"bytes"
 	"encoding/base64"
 	"encoding/gob"
-	"sync"
+	"fmt"
 	"time"
 
 	"github.com/inimei/backup/log"
+	"github.com/inimei/ddns/config"
 	"github.com/inimei/ddns/ddns/container"
+	"github.com/inimei/ddns/errs"
 	"github.com/miekg/dns"
 )
 
@@ -86,126 +88,38 @@ func init() {
 	gob.Register((*dns.OPENPGPKEY)(nil))
 }
 
-type KeyExpired struct {
-	Key string
-}
-
-func (e KeyExpired) Error() string {
-	return e.Key + " " + "expired"
-}
-
-type KeyNotFound struct {
-	Key string
-}
-
-func (e KeyNotFound) Error() string {
-	return e.Key + " " + "key not found"
-}
-
-type CacheIsFull struct {
-}
-
-func (e CacheIsFull) Error() string {
-	return "Cache is Full"
-}
-
-type SerializerError struct {
-}
-
-func (e SerializerError) Error() string {
-	return "Serializer error"
-}
-
-type Mesg struct {
-	Msg    *dns.Msg
-	Expire time.Time
-}
-
 type Cache interface {
-	Get(key string) (Msg *dns.Msg, err error)
+	Get(key string) (*dns.Msg, error)
 	Set(key string, Msg *dns.Msg) error
 	Exists(key string) bool
 	Remove(key string)
 	Length() int
 }
 
-type MemoryCache struct {
-	Backend  map[string]Mesg
-	Expire   time.Duration
-	Maxcount int
-	mu       sync.RWMutex
-}
+func NewRedisCache(key string, db int, defExpire int) (Cache, error) {
+	cfg := `{ "key":"%s", "dbNum":"%v", "password": "%s", "conn":"%s", "scancount": "500"}`
 
-func (c *MemoryCache) Get(key string) (*dns.Msg, error) {
-	c.mu.RLock()
-	mesg, ok := c.Backend[key]
-	c.mu.RUnlock()
-	if !ok {
-		return nil, KeyNotFound{key}
+	ccfg := fmt.Sprintf(cfg, key, db, config.Data.Redis.Passwd, config.Data.Redis.Host)
+	c, err := container.NewContainer(container.CTRedis, ccfg)
+	if err != nil {
+		log.Error(err.Error())
+		return nil, err
 	}
 
-	if mesg.Expire.Before(time.Now()) {
-		c.Remove(key)
-		return nil, KeyExpired{key}
-	}
-
-	return mesg.Msg, nil
+	return &rCache{c, time.Duration(defExpire) * time.Second}, nil
 }
 
-func (c *MemoryCache) Set(key string, msg *dns.Msg) error {
-	if c.Full() && !c.Exists(key) {
-		return CacheIsFull{}
-	}
-
-	var expire time.Time
-	if msg != nil && len(msg.Answer) > 0 && msg.Answer[0].Header() != nil {
-		h := msg.Answer[0].Header()
-		expire = time.Now().Add(time.Duration(h.Ttl) * time.Second)
-	} else {
-		expire = time.Now().Add(c.Expire)
-	}
-
-	mesg := Mesg{msg, expire}
-	c.mu.Lock()
-	c.Backend[key] = mesg
-	c.mu.Unlock()
-	return nil
+func NewMemCache(defExpire int) (Cache, error) {
+	c, _ := container.NewContainer(container.CTMemery, "")
+	return &rCache{c, time.Duration(defExpire) * time.Second}, nil
 }
 
-func (c *MemoryCache) Remove(key string) {
-	c.mu.Lock()
-	delete(c.Backend, key)
-	c.mu.Unlock()
+type rCache struct {
+	Backend container.Container
+	Expire  time.Duration
 }
 
-func (c *MemoryCache) Exists(key string) bool {
-	c.mu.RLock()
-	_, ok := c.Backend[key]
-	c.mu.RUnlock()
-	return ok
-}
-
-func (c *MemoryCache) Length() int {
-	c.mu.RLock()
-	defer c.mu.RUnlock()
-	return len(c.Backend)
-}
-
-func (c *MemoryCache) Full() bool {
-	// if Maxcount is zero. the cache will never be full.
-	if c.Maxcount == 0 {
-		return false
-	}
-	return c.Length() >= c.Maxcount
-}
-
-type RedisCache struct {
-	Backend  container.Container
-	Expire   time.Duration
-	Maxcount int
-}
-
-func (c *RedisCache) Get(key string) (*dns.Msg, error) {
+func (c *rCache) Get(key string) (*dns.Msg, error) {
 
 	data, err := c.Backend.Get(key)
 	if err != nil {
@@ -217,7 +131,7 @@ func (c *RedisCache) Get(key string) (*dns.Msg, error) {
 	}
 
 	if len(data) == 0 {
-		return nil, KeyNotFound{key}
+		return nil, errs.ErrKeyNotFound
 	}
 
 	msg, err := c.decode(data)
@@ -229,7 +143,7 @@ func (c *RedisCache) Get(key string) (*dns.Msg, error) {
 	return msg, nil
 }
 
-func (c *RedisCache) Set(key string, msg *dns.Msg) error {
+func (c *rCache) Set(key string, msg *dns.Msg) error {
 
 	var expire int64
 	if msg != nil && len(msg.Answer) > 0 && msg.Answer[0].Header() != nil {
@@ -255,18 +169,18 @@ func (c *RedisCache) Set(key string, msg *dns.Msg) error {
 	return nil
 }
 
-func (c *RedisCache) Remove(key string) {
+func (c *rCache) Remove(key string) {
 	err := c.Backend.Delete(key)
 	if err != nil {
 		log.Error(err.Error())
 	}
 }
 
-func (c *RedisCache) Exists(key string) bool {
+func (c *rCache) Exists(key string) bool {
 	return c.Backend.IsExist(key)
 }
 
-func (c *RedisCache) Length() int {
+func (c *rCache) Length() int {
 	len, err := c.Backend.Count()
 	if err != nil {
 		log.Error(err.Error())
@@ -275,7 +189,7 @@ func (c *RedisCache) Length() int {
 	return int(len)
 }
 
-func (c *RedisCache) encode(msg *dns.Msg) (string, error) {
+func (c *rCache) encode(msg *dns.Msg) (string, error) {
 	buf := bytes.NewBuffer(nil)
 	enc := gob.NewEncoder(buf)
 	err := enc.Encode(msg)
@@ -290,7 +204,7 @@ func (c *RedisCache) encode(msg *dns.Msg) (string, error) {
 	return string(encoded), nil
 }
 
-func (c *RedisCache) decode(msg string) (*dns.Msg, error) {
+func (c *rCache) decode(msg string) (*dns.Msg, error) {
 	value := []byte(msg)
 	decoded := make([]byte, base64.URLEncoding.DecodedLen(len(value)))
 	b, err := base64.URLEncoding.Decode(decoded, value)

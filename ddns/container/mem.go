@@ -1,128 +1,76 @@
 package container
 
 import (
-	"errors"
 	"sync"
+	"time"
+
+	"github.com/inimei/ddns/errs"
 )
 
-type set map[string]bool
-
-func (s set) toArray() []string {
-	cnt := len(s)
-
-	if cnt == 0 {
-		return []string{}
-	}
-
-	ss := make([]string, 0, cnt)
-	for k := range s {
-		ss = append(ss, k)
-	}
-
-	return ss
+type value struct {
+	val    string
+	expire time.Time
 }
 
 type MemContainer struct {
-	data map[string]set
-	eof  bool
-	mtx  *sync.Mutex
+	sync.RWMutex
+
+	data map[string]value
 }
 
 func newMemContainer() *MemContainer {
-	return &MemContainer{map[string]set{}, false, &sync.Mutex{}}
+	return &MemContainer{data: map[string]value{}}
 }
 
 //Get ....
-func (mr *MemContainer) Get(key string) ([]string, error) {
+func (mr *MemContainer) Get(key string) (string, error) {
+
+	mr.Lock()
+	defer mr.Unlock()
+
 	if s, ok := mr.data[key]; ok {
-		return s.toArray(), nil
+		if s.expire.Before(time.Now()) {
+			delete(mr.data, key)
+		} else {
+			return s.val, nil
+		}
 	}
-	return []string{}, nil
+	return "", errs.ErrKeyNotFound
+}
+
+func (mr *MemContainer) Set(key string, val string, expire int64) error {
+	mr.Lock()
+	defer mr.Unlock()
+
+	mr.data[key] = value{val, time.Now().Add(time.Duration(expire) * time.Second)}
+
+	return nil
 }
 
 func (mr *MemContainer) Delete(key string) error {
+
+	mr.Lock()
+	defer mr.Unlock()
+
 	if _, ok := mr.data[key]; !ok {
 		return nil
 	}
 
-	mr.mtx.Lock()
-	defer mr.mtx.Unlock()
 	delete(mr.data, key)
-
 	return nil
-}
-
-func (mr *MemContainer) Append(key, val string) error {
-	mr.mtx.Lock()
-	defer mr.mtx.Unlock()
-
-	if _, ok := mr.data[key]; !ok {
-		mr.data[key] = set{val: true}
-	} else {
-		mr.data[key][val] = true
-	}
-	return nil
-}
-
-func (mr *MemContainer) DeleteValue(key, val string) error {
-
-	if _, ok := mr.data[key]; !ok {
-		return nil
-	}
-
-	if _, ok := mr.data[key][val]; !ok {
-		return nil
-	}
-
-	mr.mtx.Lock()
-	defer mr.mtx.Unlock()
-
-	delete(mr.data[key], val)
-	return nil
-}
-
-func (mr *MemContainer) ValueCount(key string) (int, error) {
-	if _, ok := mr.data[key]; !ok {
-		return 0, nil
-	}
-
-	return len(mr.data[key]), nil
 }
 
 func (mr *MemContainer) IsExist(key string) bool {
+	mr.RLock()
+	defer mr.RUnlock()
+
 	_, ok := mr.data[key]
 	return ok
 }
 
-func (mr *MemContainer) ClearAll() error {
-	mr.mtx.Lock()
-	defer mr.mtx.Unlock()
-	mr.data = map[string]set{}
-	return nil
-}
+func (mr *MemContainer) Count() (int64, error) {
+	mr.RLock()
+	defer mr.RUnlock()
 
-//内存的同从不大，所以不管多少一次搞定
-func (mr *MemContainer) StartScan() {
-	mr.eof = false
-}
-
-func (mr *MemContainer) ScanNext() ([]string, error) {
-
-	if mr.eof {
-		return nil, errors.New("Scan EOF")
-	}
-
-	mr.eof = true
-
-	cnt := len(mr.data)
-	ss := make([]string, 0, cnt)
-	for k := range mr.data {
-		ss = append(ss, k)
-	}
-
-	return ss, nil
-}
-
-func (mr *MemContainer) Eof() bool {
-	return mr.eof
+	return int64(len(mr.data)), nil
 }

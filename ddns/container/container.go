@@ -24,18 +24,10 @@ func (e ContainerErr) Error() string {
 
 type Container interface {
 	Get(key string) (string, error)
-	Set(key string, val string, expire int64) error
+	Set(key string, val string, expire int64) error //expire: secend
 	Delete(key string) error
 	IsExist(key string) bool
-	ClearAll() error
 	Count() (int64, error)
-	//Append(key, val string) error
-	//DeleteValue(key, val string) error
-	//ValueCount(key string) (int, error)
-
-	StartScan()
-	ScanNext() ([]string, error)
-	Eof() bool
 }
 
 const (
@@ -50,9 +42,8 @@ func NewContainer(containerType, cfg string) (Container, error) {
 			return nil, err
 		}
 		return c, nil
-		/*} else if containerType == CTMemery {
+	} else if containerType == CTMemery {
 		return newMemContainer(), nil
-		*/
 	} else {
 		return nil, errors.New("Not Implement")
 	}
