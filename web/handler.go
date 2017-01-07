@@ -273,7 +273,7 @@ func (h *handler) newDomain(c *gin.Context) {
 	}
 
 	userid, _ := sessions.GetUserID(c.Request)
-	id, err := h.ws.db.NewDomain(userid, d.DomainName)
+	id, err := h.ws.db.NewDomain(userid, d)
 	if err != nil {
 		log.Error(err.Error())
 		c.JSON(http.StatusOK, JsonMap{

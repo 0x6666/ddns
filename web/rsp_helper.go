@@ -102,6 +102,7 @@ func (h *handler) createDomainFromForm(c *gin.Context) *model.Domain {
 
 	d := &model.Domain{}
 	d.DomainName = strings.ToLower(c.PostForm("domain"))
+	d.Synced = false
 
 	return d
 }
