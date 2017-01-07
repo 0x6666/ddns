@@ -22,7 +22,7 @@ func init() {
 		Path:     "/",
 		Domain:   "",
 		MaxAge:   config.Data.Session.Maxage,
-		Secure:   true,
+		Secure:   false,
 		HttpOnly: false,
 	}
 
