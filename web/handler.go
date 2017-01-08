@@ -121,7 +121,11 @@ func (h *handler) root(c *gin.Context) {
 //
 func (h *handler) getLogin(c *gin.Context) {
 	if sessions.IsLogined(c.Request) {
-		c.Redirect(http.StatusPermanentRedirect, pRoot)
+		to := c.Query("to")
+		if len(to) == 0 {
+			to = pRoot
+		}
+		c.Redirect(http.StatusPermanentRedirect, to)
 		return
 	}
 

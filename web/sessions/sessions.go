@@ -5,6 +5,7 @@ import (
 
 	"github.com/boj/redistore"
 	"github.com/gorilla/sessions"
+	"github.com/inimei/backup/log"
 	"github.com/inimei/ddns/config"
 	"github.com/inimei/ddns/errs"
 	"github.com/inimei/ddns/web/sessions/memstore"
@@ -77,7 +78,11 @@ func Logout(w http.ResponseWriter, r *http.Request) error {
 	}
 
 	session.Options.MaxAge = -1
-	return session.Save(r, w)
+	err := session.Save(r, w)
+	if err != nil {
+		log.Error(err.Error())
+	}
+	return err
 }
 
 func GetUserID(r *http.Request) (int64, error) {
