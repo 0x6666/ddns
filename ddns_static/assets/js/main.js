@@ -59,6 +59,7 @@
 
 	(function () {
 		$('.dropdown-menu .logout').click(function (e) {
+			e.preventDefault();
 			$.ajax({
 				type: 'POST',
 				url: '/logout',
@@ -67,7 +68,6 @@
 					withCredentials: true
 				},
 				success: function (rsp) {
-					e.preventDefault();
 					if (rsp.code === "ok" || rsp.code === "InvalidSession") {
 						var href = window.location.href;
 						if (href !== '/login') {
