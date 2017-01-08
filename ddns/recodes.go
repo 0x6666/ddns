@@ -51,12 +51,15 @@ func (d *DBRecodes) Get(domain string, qtype uint16) ([]net.IP, int, bool) {
 	d.RLock()
 	defer d.RUnlock()
 
-	dm := strings.ToLower(domain)
-	if d, exist := d.cache[dm]; exist {
+	_getVal := func(host, domain string) ([]net.IP, int, bool) {
+		d, exist := d.cache[domain]
+		if !exist {
+			return nil, 0, false
+		}
 
 		switch qtype {
 		case dns.TypeA, dns.TypeAAAA:
-			if r, e := d["@"]; e {
+			if r, e := d[host]; e {
 				if v, e := r[qtype]; e {
 					ip := net.ParseIP(v.val)
 					if ip == nil {
@@ -78,7 +81,20 @@ func (d *DBRecodes) Get(domain string, qtype uint16) ([]net.IP, int, bool) {
 				}
 			}
 		}
+		return nil, 0, false
 	}
+
+	dm := strings.ToLower(domain)
+	ips, ttl, exist := _getVal("@", dm)
+	if exist {
+		return ips, ttl, exist
+	}
+
+	hosts := strings.SplitN(dm, ".", 2)
+	if len(hosts) == 2 {
+		return _getVal(hosts[0], hosts[1])
+	}
+
 	return nil, 0, false
 }
 

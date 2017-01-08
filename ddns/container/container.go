@@ -32,7 +32,7 @@ type Container interface {
 
 const (
 	CTRedis  = "Redis"
-	CTMemery = "Memery"
+	CTMemory = "Memory"
 )
 
 func NewContainer(containerType, cfg string) (Container, error) {
@@ -42,7 +42,7 @@ func NewContainer(containerType, cfg string) (Container, error) {
 			return nil, err
 		}
 		return c, nil
-	} else if containerType == CTMemery {
+	} else if containerType == CTMemory {
 		return newMemContainer(), nil
 	} else {
 		return nil, errors.New("Not Implement")

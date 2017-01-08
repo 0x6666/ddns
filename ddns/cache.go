@@ -110,7 +110,7 @@ func NewRedisCache(key string, db int, defExpire int) (Cache, error) {
 }
 
 func NewMemCache(defExpire int) (Cache, error) {
-	c, _ := container.NewContainer(container.CTMemery, "")
+	c, _ := container.NewContainer(container.CTMemory, "")
 	return &rCache{c, time.Duration(defExpire) * time.Second}, nil
 }
 

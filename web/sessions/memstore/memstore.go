@@ -27,7 +27,7 @@ func NewMemStore(keyPairs ...[]byte) *MemStore {
 	}
 }
 
-// MemStore stores sessions in memery
+// MemStore stores sessions in memory
 type MemStore struct {
 	Codecs  []securecookie.Codec
 	Options *sessions.Options // default configuration

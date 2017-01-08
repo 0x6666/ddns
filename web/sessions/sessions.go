@@ -28,7 +28,7 @@ func init() {
 	}
 
 	switch config.Data.Session.Backend {
-	case "memery":
+	case "memory":
 		s := memstore.NewMemStore([]byte(secretKey))
 		s.Options = o
 		store = s
