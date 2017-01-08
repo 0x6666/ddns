@@ -77,12 +77,12 @@ func GetUserID(r *http.Request) (int64, error) {
 	}
 
 	userid, b := session.Values["userid"]
-	if b {
+	if !b {
 		return 0, errs.ErrInvalidSession
 	}
 
 	id, b := userid.(int64)
-	if b {
+	if !b {
 		return 0, errs.ErrInvalidSession
 	}
 

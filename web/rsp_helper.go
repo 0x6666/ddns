@@ -52,6 +52,12 @@ func (h *handler) getTemplateParameter(c *gin.Context) map[string]interface{} {
 		parameters["Layout"] = "app_view.html"
 	}
 
+	val, exist := c.Get(MwUserid)
+	if exist {
+		//TODO: impl user
+		parameters["CurUser"] = JsonMap{"UserID": val, "UserName": "YangSong"}
+	}
+
 	return parameters
 }
 

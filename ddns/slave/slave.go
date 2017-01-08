@@ -230,8 +230,6 @@ func (ss *SlaveServer) getRecodes() ([]recode, error) {
 		return nil, err
 	}
 
-	log.Info("no data for sync...")
-
 	rs := []recode{}
 	for _, d := range data.Domains {
 		_rs := []recode{}

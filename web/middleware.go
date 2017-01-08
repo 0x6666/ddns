@@ -10,6 +10,11 @@ import (
 	"github.com/inimei/ddns/web/signature"
 )
 
+const (
+	MwUserid    = "UserID"
+	MwSecretKey = "secretKey"
+)
+
 // SignMiddleware 检查API签名
 // 如果成功，会向context中写入secretkey字段
 func (h *handler) SignMiddleware(c *gin.Context) {
@@ -47,13 +52,14 @@ func (h *handler) SignMiddleware(c *gin.Context) {
 		return
 	}
 
-	c.Set("secretKey", secretKey)
+	c.Set(MwSecretKey, secretKey)
 	c.Next()
 }
 
 func (h *handler) CookieAuthMiddleware(c *gin.Context) {
 
-	if !sessions.IsLogined(c.Request) {
+	userid, err := sessions.GetUserID(c.Request)
+	if err != nil {
 		if strings.ToLower(c.Request.Header.Get("DDNS-View")) == "true" {
 			c.JSON(http.StatusUnauthorized, "")
 			c.Abort()
@@ -63,6 +69,8 @@ func (h *handler) CookieAuthMiddleware(c *gin.Context) {
 		c.Abort()
 		return
 	}
+
+	c.Set(MwUserid, userid)
 
 	c.Next()
 }
