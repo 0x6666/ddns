@@ -70,6 +70,16 @@ func IsLogined(r *http.Request) bool {
 	return true
 }
 
+func Logout(w http.ResponseWriter, r *http.Request) error {
+	session, _ := store.Get(r, CookieName)
+	if session.IsNew {
+		return nil
+	}
+
+	session.Options.MaxAge = -1
+	return session.Save(r, w)
+}
+
 func GetUserID(r *http.Request) (int64, error) {
 	session, _ := store.Get(r, CookieName)
 	if session.IsNew {

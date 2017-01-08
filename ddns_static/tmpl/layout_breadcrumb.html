@@ -12,6 +12,7 @@
 		{{end}}
 	</ul>
 
+{{if .CurUser}}
 	<ul class="nav navbar-nav pull-right right-menu">
 		<!--li><a href="/">Home</a></li-->
 		<li class="dropdown">
@@ -19,9 +20,10 @@
                 {{.CurUser.UserName}} <b class="caret"></b>
               </a>
 			<ul class="dropdown-menu">
-				<li><a rel="nofollow" data-method="delete" href="/logout">Log Out</a></li>
+				<li><a class="logout" href="/logout">Log Out</a></li>
 			</ul>
 		</li>
 	</ul>
+{{end}}
 </div>
 {{end}}

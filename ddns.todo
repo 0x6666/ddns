@@ -3,7 +3,7 @@
 ✔ API: update @done (11/28/2016, 10:59:57 PM)
 ✔ Recode type @done (1/5/2017, 7:54:59 PM)
 ☐ db upgrade
-☐ Logout & Redirect
+✔ Logout & Redirect @done (1/8/2017, 4:01:46 PM)
 ☐ File Dowload
 ✔ redis @done (1/7/2017, 7:06:35 PM)
 ☐ mysql

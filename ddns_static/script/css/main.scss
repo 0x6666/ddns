@@ -216,6 +216,7 @@ $item-hover: #333;
 		}
 
 		.dropdown-menu {
+			min-width: 118px;
 			a {
 				background-color: white;
 				color: #222;

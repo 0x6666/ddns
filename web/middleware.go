@@ -2,6 +2,7 @@ package web
 
 import (
 	"net/http"
+	"net/url"
 	"strings"
 
 	"github.com/gin-gonic/gin"
@@ -65,7 +66,12 @@ func (h *handler) CookieAuthMiddleware(c *gin.Context) {
 			c.Abort()
 			return
 		}
-		c.Redirect(http.StatusTemporaryRedirect, "/login")
+
+		refer := c.Request.Referer()
+		if len(refer) == 0 {
+			refer = c.Request.RequestURI
+		}
+		c.Redirect(http.StatusTemporaryRedirect, "/login?to="+url.QueryEscape(refer))
 		c.Abort()
 		return
 	}

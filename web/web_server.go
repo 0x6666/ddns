@@ -67,6 +67,7 @@ func (ws *WebServer) regWebHandler() {
 	group.POST(pLogin, ws.h.login)
 	group.GET(pLogin, ws.h.getLogin)
 	group.GET(pAbout, ws.h.getAbout)
+	group.POST(pLogout, ws.h.logout)
 
 	auth := group.Group("", ws.h.CookieAuthMiddleware)
 

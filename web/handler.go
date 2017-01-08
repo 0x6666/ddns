@@ -23,6 +23,7 @@ const (
 	pRecodes = "/domain/:did/recodes"
 	pRecode  = "/recode/:rid"
 	pLogin   = "/login"
+	pLogout  = "/logout"
 	pAbout   = "/about"
 
 	pDomains = "/domains"
@@ -44,6 +45,7 @@ const (
 
 const (
 	CodeOK                 = "ok"
+	CodeInvalidSession     = "InvalidSession"
 	CodeDBError            = "DBError"
 	CodeUnknowError        = "UnknowError"
 	CodeInvalidParam       = "InvalidParam"
@@ -173,6 +175,34 @@ func (h *handler) login(c *gin.Context) {
 	sessions.Login(c.Writer, c.Request, model.DefUserID)
 
 	h.rspOk(c)
+}
+
+// logout -> [POST] :/logout
+//
+// Ret Code:[200]
+//
+// 成功返回值
+//	{
+//		"code": "OK"
+//	}
+//
+// 失败返回值
+//		code: xxx
+//
+func (h *handler) logout(c *gin.Context) {
+	b := sessions.IsLogined(c.Request)
+	if !b {
+		c.JSON(http.StatusOK, JsonMap{"code": CodeInvalidSession})
+		return
+	}
+
+	err := sessions.Logout(c.Writer, c.Request)
+	if err != nil {
+		log.Error(err.Error())
+		c.JSON(http.StatusOK, JsonMap{"code": CodeUnknowError})
+		return
+	}
+	c.JSON(http.StatusOK, JsonMap{"code": CodeOK})
 }
 
 // getDomains -> [GET] :/domains?r=true&offset=10&limit=0

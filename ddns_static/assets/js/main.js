@@ -57,6 +57,31 @@
 
 (function (exports) {
 
+	(function () {
+		$('.dropdown-menu .logout').click(function (e) {
+			$.ajax({
+				type: 'POST',
+				url: '/logout',
+				cache: false,
+				xhrFields: {
+					withCredentials: true
+				},
+				success: function (rsp) {
+					e.preventDefault();
+					if (rsp.code === "ok" || rsp.code === "InvalidSession") {
+						var href = window.location.href;
+						if (href !== '/login') {
+							href = '/login?to=' + encodeURIComponent(href);
+						}
+						window.location.href = href;
+					} else {
+						alert("logout failed," + rsp.code);
+					}
+				}
+			});
+		});
+	})();
+
 	function getTableHeight() {
 		return $(window).height() - $('h1').outerHeight(true);
 	}
@@ -613,11 +638,8 @@
 		}
 	};
 
-
 	exports.load_series = load_series;
 	exports.str_to_type = str_to_type;
 	exports.type_to_str = type_to_str;
-
-
 
 })((typeof (exports) === "object" ? exports : window), jQuery);

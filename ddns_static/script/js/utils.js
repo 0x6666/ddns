@@ -67,11 +67,8 @@
 		}
 	};
 
-
 	exports.load_series = load_series;
 	exports.str_to_type = str_to_type;
 	exports.type_to_str = type_to_str;
-
-
 
 })((typeof (exports) === "object" ? exports : window), jQuery);
