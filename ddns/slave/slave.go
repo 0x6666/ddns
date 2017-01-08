@@ -83,8 +83,8 @@ func (ss *SlaveServer) Start() {
 
 	go func() {
 		for {
-			ss.checkUpdate(false)
 			<-ticker.C
+			ss.checkUpdate(false)
 		}
 	}()
 }
