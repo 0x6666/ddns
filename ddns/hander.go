@@ -216,9 +216,7 @@ func (h *DDNSHandler) do(netType NetType, w dns.ResponseWriter, req *dns.Msg) {
 				*/
 				return
 			}
-		}
-
-		if ips, ttl, ok := h.dbrecodes.Get(Q.qname, q.Qtype); ok {
+		} else if ips, ttl, ok := h.dbrecodes.Get(Q.qname, q.Qtype); ok {
 			rspByIps(ips, uint32(ttl))
 			log.Debug("%s found in database", Q.String())
 			return

@@ -8,11 +8,12 @@ import (
 const CurrentVersion = "1.0"
 const DefUserID int64 = 1
 
-type RecodeType int
+type RecodeType uint16
 
 const (
-	AAAA RecodeType = iota
+	_NONE RecodeType = iota
 	A
+	AAAA
 	CNAME
 )
 
