@@ -54,7 +54,7 @@ func (d domainCache) append(domain string, r *model.Recode) {
 			log.Error("get reverse addr failed: %v", err)
 		} else {
 			if _, b := d.rdomains[fqdn(raddr)]; b {
-				log.Warn("reverse recode [%v] already exist", raddr)
+				log.Warn("reverse recode [%v] already exist, host [%v] domain [%v]", raddr, r.RecordHost, domain)
 			} else {
 				if r.RecordHost != "@" {
 					domain = r.RecordHost + "." + domain
@@ -134,7 +134,6 @@ func NewDBRecodes(db data.IDatabase) *DBRecodes {
 	dr := &DBRecodes{db: db}
 	dr.dcache = &domainCache{}
 	dr.cacheVersion = -1
-	go func() { dr.update() }()
 	dr.refresh()
 	return dr
 }
