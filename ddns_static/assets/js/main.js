@@ -621,9 +621,9 @@
 	var str_to_type = function(str) {
 		switch(str)
 		{
-			case 'AAAA': return 0;
 			case 'A': return 1;
-			case 'CNAME': return 2;
+			case 'AAAA': return 2;
+			case 'CNAME': return 3;
 			default: return -1;
 		}
 	};
@@ -631,9 +631,9 @@
 	var type_to_str = function(type) {
 		switch(type)
 		{
-			case 0: return 'AAAA';
 			case 1: return 'A';
-			case 2: return 'CNAME';
+			case 2: return 'AAAA';
+			case 3: return 'CNAME';
 			default: return "Unknow";
 		}
 	};
