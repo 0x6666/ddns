@@ -35,6 +35,12 @@
 	function totalNameFormatter(data) {
 		return data.length;
 	}
+	function rowStyle(row, index) {
+		if (row.id === '') {
+			return { classes: 'new-row' };
+		}
+		return '';
+	}
 
 	function on_init_recode_lists(did) {
 		$table = $('#tb_recodes');
@@ -179,7 +185,8 @@
 					return params;
 				},
 				responseHandler: responseHandler,
-				url: "/domain/" + did + "/recodes"
+				url: "/domain/" + did + "/recodes",
+				rowStyle: rowStyle
 			});
 			// sometimes footer render error.
 			//setTimeout(function () {
@@ -377,6 +384,7 @@
 							align: 'center',
 							valign: 'middle',
 							formatter: formatId,
+							//visible: false,
 							//footerFormatter: totalTextFormatter
 						}, {
 							field: 'domain',
@@ -396,7 +404,8 @@
 				queryParams: function (params) {
 					return params;
 				},
-				responseHandler: responseHandler
+				responseHandler: responseHandler,
+				rowStyle: rowStyle
 			});
 
 			$table.on('check.bs.table uncheck.bs.table ' +

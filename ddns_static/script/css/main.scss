@@ -224,3 +224,13 @@ $item-hover: #333;
 		}
 	}
 }
+
+
+.ddns_table, .ddns_table.table-hover {
+	tr.new-row {
+		background-color: #c3bfd4;
+		&::hover {
+			background-color: #c3bfd4;
+		}
+	}
+}
