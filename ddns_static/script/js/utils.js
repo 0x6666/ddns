@@ -47,28 +47,6 @@
 		iterate();
 	};
 
-	var str_to_type = function(str) {
-		switch(str)
-		{
-			case 'A': return 1;
-			case 'AAAA': return 2;
-			case 'CNAME': return 3;
-			default: return -1;
-		}
-	};
-
-	var type_to_str = function(type) {
-		switch(type)
-		{
-			case 1: return 'A';
-			case 2: return 'AAAA';
-			case 3: return 'CNAME';
-			default: return "Unknow";
-		}
-	};
-
 	exports.load_series = load_series;
-	exports.str_to_type = str_to_type;
-	exports.type_to_str = type_to_str;
 
 })((typeof (exports) === "object" ? exports : window), jQuery);

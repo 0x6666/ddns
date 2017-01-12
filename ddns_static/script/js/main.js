@@ -65,7 +65,7 @@
 					} else {
 						ddns_new_recode(
 							did,
-							{ host: row.host, type: str_to_type(row.type), value: row.value, ttl: row.ttl },
+							{ host: row.host, type: row.type, value: row.value, ttl: row.ttl },
 							function (rspData) {
 								if (rspData.code == "ok") {
 									$table.bootstrapTable('updateRow', { index: idx, row: { id: rspData.id, key: rspData.key, dynamic: rspData.dynamic } });
@@ -107,9 +107,7 @@
 				}
 			};
 
-		function formatType(value, row, index) {
-			return type_to_str(value);
-		}
+
 		function formatDynamic(value, row, index) {
 			return '<input class="dynamic" type="checkbox"' + (value === true ? 'checked="checked"' : '') + '"/>';
 		}
@@ -143,10 +141,17 @@
 						}, {
 							field: 'type',
 							title: 'Recode Type',
-							editable: true,
 							footerFormatter: totalNameFormatter,
 							align: 'center',
-							formatter: formatType
+							editable: {
+								type: 'select',
+								value: 1,
+								source: [
+									{value: 1, text: 'A'},
+									{value: 2, text: 'AAAA'},
+									{value: 3, text: 'CNAME'}
+								]
+							},
 						}, {
 							field: 'ttl',
 							title: 'TTL',
@@ -193,24 +198,6 @@
 			//	$table.bootstrapTable('resetView');
 			//}, 200);
 
-			$table.on('check.bs.table uncheck.bs.table ' +
-				'check-all.bs.table uncheck-all.bs.table', function () {
-					$remove.prop('disabled', !$table.bootstrapTable('getSelections').length);
-					// save your data, here just save the current page
-					selections = getIdSelections();
-					// push or splice the selections if you want to save all data selections
-				});
-			$table.on('expand-row.bs.table', function (e, index, row, $detail) {
-				if (index % 2 == 1) {
-					$detail.html('Loading from ajax request...');
-					$.get('LICENSE', function (res) {
-						$detail.html(res.replace(/\n/g, '<br>'));
-					});
-				}
-			});
-			$table.on('all.bs.table', function (e, name, args) {
-				console.log(name, args);
-			});
 			$remove.click(function () {
 				var ids = getIdSelections();
 				$table.bootstrapTable('remove', {
@@ -225,9 +212,10 @@
 					index: 0,
 					row: {
 						id: '',
-						name: 'test.site',
+						host: '@',
 						key: '',
 						value: '',
+						type: 1,
 						ttl: 600,
 						dynamic: true,
 						randomId: randomId
