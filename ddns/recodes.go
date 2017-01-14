@@ -80,7 +80,7 @@ func (d domainCache) getValue(host, domain string, qtype uint16) ([]net.IP, int,
 		ips := []net.IP{}
 		ttl := 0
 		for _, r := range ds {
-			if toDnsType(r.RecordType) != qtype {
+			if toDnsType(r.RecordType) != qtype || r.RecordHost != host {
 				continue
 			}
 
