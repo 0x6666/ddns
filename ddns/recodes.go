@@ -27,7 +27,7 @@ func toDnsType(t model.RecodeType) uint16 {
 	}
 }
 
-type recodeValue struct {
+type rRecode struct {
 	val string
 	ttl int
 }
@@ -35,7 +35,7 @@ type recodeValue struct {
 type fqdn string
 type domainCache struct {
 	domains  map[fqdn][]*model.Recode
-	rdomains map[fqdn]recodeValue
+	rdomains map[fqdn][]rRecode
 }
 
 func (d domainCache) append(domain string, r *model.Recode) {
@@ -49,19 +49,19 @@ func (d domainCache) append(domain string, r *model.Recode) {
 	d.domains[fqdn(domain)] = append(d.domains[fqdn(domain)], r)
 
 	if r.RecordType == model.A || r.RecordType == model.AAAA {
-		raddr, err := dns.ReverseAddr(r.RecodeValue)
+		addr, err := dns.ReverseAddr(r.RecodeValue)
+		raddr := fqdn(addr)
 		if err != nil {
 			log.Error("get reverse addr failed: %v", err)
 		} else {
-			if _, b := d.rdomains[fqdn(raddr)]; b {
-				log.Warn("reverse recode [%v] already exist, host [%v] domain [%v]", raddr, r.RecordHost, domain)
-			} else {
-				if r.RecordHost != "@" {
-					domain = r.RecordHost + "." + domain
-				}
-
-				d.rdomains[fqdn(raddr)] = recodeValue{val: domain, ttl: r.TTL}
+			if r.RecordHost != "@" {
+				domain = r.RecordHost + "." + domain
 			}
+
+			if _, b := d.rdomains[raddr]; !b {
+				d.rdomains[raddr] = []rRecode{}
+			}
+			d.rdomains[raddr] = append(d.rdomains[raddr], rRecode{val: domain, ttl: r.TTL})
 		}
 	}
 }
@@ -112,12 +112,12 @@ func (d domainCache) getValue(host, domain string, qtype uint16) ([]net.IP, int,
 	return nil, 0, false
 }
 
-func (d domainCache) getReverseValue(name string) (string, int, bool) {
-	name = dns.Fqdn(name)
-	if v, b := d.rdomains[fqdn(name)]; b {
-		return v.val, v.ttl, true
+func (d domainCache) getReverseValue(addr string) []rRecode {
+	name := fqdn(dns.Fqdn(addr))
+	if v, b := d.rdomains[name]; b {
+		return v
 	}
-	return "", 0, false
+	return nil
 }
 
 type DBRecodes struct {
@@ -161,7 +161,7 @@ func (d *DBRecodes) Get(domain string, qtype uint16) ([]net.IP, int, bool) {
 	return nil, 0, false
 }
 
-func (d *DBRecodes) ReverseGet(name string) (string, int, bool) {
+func (d *DBRecodes) ReverseGet(name string) []rRecode {
 	d.RLock()
 	defer d.RUnlock()
 
@@ -179,7 +179,7 @@ func (d *DBRecodes) update() {
 		return
 	}
 
-	dcache := &domainCache{map[fqdn][]*model.Recode{}, map[fqdn]recodeValue{}}
+	dcache := &domainCache{map[fqdn][]*model.Recode{}, map[fqdn][]rRecode{}}
 	for _, domain := range ds {
 		recodes, err := d.db.GetRecodes(domain.ID, 0, -1)
 		if err != nil {

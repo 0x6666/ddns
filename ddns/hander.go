@@ -290,13 +290,16 @@ func (s *DDNSHandler) ServeDNSReverse(w dns.ResponseWriter, req *dns.Msg) *dns.M
 func (h *DDNSHandler) PTRRecords(q dns.Question) (records []dns.RR, err error) {
 	name := strings.ToLower(q.Name)
 	if h.dbrecodes != nil {
-		d, ttl, exist := h.dbrecodes.ReverseGet(name)
-		if !exist {
+		vs := h.dbrecodes.ReverseGet(name)
+		if len(vs) == 0 {
 			return nil, errs.ErrPtrRecodeNotFound
 		}
 
-		ptr := &dns.PTR{Hdr: dns.RR_Header{Name: name, Rrtype: dns.TypePTR, Class: dns.ClassINET, Ttl: uint32(ttl)}, Ptr: dns.Fqdn(d)}
-		records = append(records, ptr)
+		for _, r := range vs {
+			ptr := &dns.PTR{Hdr: dns.RR_Header{Name: name, Rrtype: dns.TypePTR, Class: dns.ClassINET, Ttl: uint32(r.ttl)}, Ptr: dns.Fqdn(r.val)}
+			records = append(records, ptr)
+		}
+
 		return records, nil
 	}
 
