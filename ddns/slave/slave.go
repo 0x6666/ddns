@@ -35,7 +35,7 @@ type recode struct {
 	Name    string           `json:"name"`
 	Dynamic bool             `json:"dynamic"`
 	Value   string           `json:"value"`
-	Ttl     int              `json:"ttl"`
+	Ttl     uint32           `json:"ttl"`
 	Key     string           `json:"key"`
 	domian  string
 	userid  int64

@@ -71,7 +71,7 @@ type Recode struct {
 	RecordType  RecodeType `gorm:"unique_index:recode_unique;column:type;type:int"` // 1 ipv4
 	RecordHost  string     `gorm:"unique_index:recode_unique;column:host"`
 	RecodeValue string     `gorm:"unique_index:recode_unique;column:value"`
-	TTL         int        `gorm:"column:ttl"`
+	TTL         uint32     `gorm:"column:ttl"`
 }
 
 func (Recode) TableName() string {

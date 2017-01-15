@@ -36,6 +36,13 @@ func KeyGen(q Question) string {
 	return key
 }
 
+func UnFqdn(s string) string {
+	if dns.IsFqdn(s) {
+		return s[:len(s)-1]
+	}
+	return s
+}
+
 type Question struct {
 	qname  string
 	qtype  string
@@ -208,18 +215,35 @@ func (h *DDNSHandler) do(netType NetType, w dns.ResponseWriter, req *dns.Msg) {
 		if q.Qtype == dns.TypePTR && strings.HasSuffix(Q.qname, ".in-addr.arpa") || strings.HasSuffix(Q.qname, ".ip6.arpa") {
 			resp := h.ServeDNSReverse(w, req)
 			if resp != nil {
-				/*
-					err := h.cache.Set(key, resp)
-					if err != nil {
-						log.Error(err.Error())
-					}
-				*/
+				log.Debug("%s found in database", Q.String())
 				return
 			}
-		} else if ips, ttl, ok := h.dbrecodes.Get(Q.qname, q.Qtype); ok {
-			rspByIps(ips, uint32(ttl))
-			log.Debug("%s found in database", Q.String())
-			return
+		} else {
+			m := new(dns.Msg)
+			m.SetReply(req)
+			m.RecursionAvailable = true
+
+			switch q.Qtype {
+			case dns.TypeA, dns.TypeAAAA:
+				rs := h.AddrRecode(Q.qname, q.Qtype, nil)
+				if len(rs) > 0 {
+					m.Answer = append(m.Answer, rs...)
+				}
+			case dns.TypeCNAME:
+				rs := h.CNAMERecode(Q.qname)
+				if len(rs) > 0 {
+					m.Answer = append(m.Answer, rs...)
+				}
+			}
+
+			if len(m.Answer) > 0 {
+				if err := w.WriteMsg(m); err != nil {
+					log.Error(err.Error())
+				} else {
+					log.Debug("%s found in database", Q.String())
+				}
+				return
+			}
 		}
 		log.Debug("%s didn't found in database", Q.String())
 	}
@@ -258,7 +282,8 @@ func (h *DDNSHandler) do(netType NetType, w dns.ResponseWriter, req *dns.Msg) {
 
 	w.WriteMsg(mesg)
 
-	if IPQuery > 0 && len(mesg.Answer) > 0 {
+	if len(mesg.Answer) > 0 {
+		log.Debug("resolv res: %v", mesg.Answer)
 		err = h.cache.Set(key, mesg)
 		if err != nil {
 			log.Debug("Set %s cache failed: %s", Q.String(), err.Error())
@@ -267,16 +292,92 @@ func (h *DDNSHandler) do(netType NetType, w dns.ResponseWriter, req *dns.Msg) {
 	}
 }
 
+func (h *DDNSHandler) AddrRecode(domain string, qtype uint16, prrs []dns.RR) (rrs []dns.RR) {
+	domain = dns.Fqdn(domain)
+	rs := h.dbrecodes.GetAddrCname(domain, qtype)
+	if len(rs) == 0 {
+		return rrs
+	}
+
+	for _, r := range rs {
+		if r.Type == qtype { // A | AAAA
+			ip := net.ParseIP(r.Host)
+			if ip != nil {
+				if ip.To4() != nil && (qtype == dns.TypeA) {
+					ip = ip.To4()
+				} else if ip.To4() == nil && (qtype == dns.TypeAAAA) {
+					ip = ip.To16()
+				} else {
+					continue
+				}
+			}
+
+			rrs = append(rrs, &dns.A{
+				Hdr: dns.RR_Header{
+					Name:   domain,
+					Rrtype: qtype,
+					Class:  dns.ClassINET,
+					Ttl:    r.TTL,
+				},
+				A: ip})
+		} else if r.Type == dns.TypeCNAME {
+			if domain == r.Host {
+				log.Warn("CNAME loop detected: %q -> %q", domain, domain)
+				continue
+			}
+
+			cname := r.newCNAME(domain)
+			if len(prrs) > 7 {
+				log.Warn("CNAME lookup limit of 8 exceeded for %s", cname)
+				continue
+			}
+
+			if h.isDuplicateCNAME(cname, prrs) {
+				log.Warn("CNAME loop detected for record %s", cname)
+				continue
+			}
+
+			nextRecords := h.AddrRecode(r.Host, qtype, append(prrs, cname))
+			if len(nextRecords) > 0 {
+				rrs = append(rrs, cname)
+				rrs = append(rrs, nextRecords...)
+			}
+			continue
+		} else {
+			log.Warn("invlid type [%v]", r.Type)
+		}
+	}
+	return rrs
+}
+
+func (h *DDNSHandler) isDuplicateCNAME(r *dns.CNAME, records []dns.RR) bool {
+	for _, rec := range records {
+		if v, ok := rec.(*dns.CNAME); ok {
+			if v.Target == r.Target {
+				return true
+			}
+		}
+	}
+	return false
+}
+
+func (h *DDNSHandler) CNAMERecode(name string) (rs []dns.RR) {
+	if r := h.dbrecodes.GetCNAMERecode(name); r != nil {
+		rs = append(rs, r.newCNAME(dns.Fqdn(name)))
+	}
+	return rs
+}
+
 // ServeDNSReverse is the handler for DNS requests for the reverse zone. If nothing is found
 // locally the request is forwarded to the forwarder for resolution.
-func (s *DDNSHandler) ServeDNSReverse(w dns.ResponseWriter, req *dns.Msg) *dns.Msg {
+func (h *DDNSHandler) ServeDNSReverse(w dns.ResponseWriter, req *dns.Msg) *dns.Msg {
 	m := new(dns.Msg)
 	m.SetReply(req)
 	m.Compress = true
 	m.Authoritative = false // Set to false, because I don't know what to do wrt DNSSEC.
 	m.RecursionAvailable = true
 	var err error
-	if m.Answer, err = s.PTRRecords(req.Question[0]); err == nil {
+	if m.Answer, err = h.PTRRecords(req.Question[0]); err == nil {
 		// TODO Reverse DNSSEC. We should sign this, but requires a key....and more
 		// Probably not worth the hassle?
 		if err := w.WriteMsg(m); err != nil {
@@ -287,6 +388,7 @@ func (s *DDNSHandler) ServeDNSReverse(w dns.ResponseWriter, req *dns.Msg) *dns.M
 
 	return nil
 }
+
 func (h *DDNSHandler) PTRRecords(q dns.Question) (records []dns.RR, err error) {
 	name := strings.ToLower(q.Name)
 	if h.dbrecodes != nil {
@@ -296,8 +398,7 @@ func (h *DDNSHandler) PTRRecords(q dns.Question) (records []dns.RR, err error) {
 		}
 
 		for _, r := range vs {
-			ptr := &dns.PTR{Hdr: dns.RR_Header{Name: name, Rrtype: dns.TypePTR, Class: dns.ClassINET, Ttl: uint32(r.ttl)}, Ptr: dns.Fqdn(r.val)}
-			records = append(records, ptr)
+			records = append(records, r.newPTR(name))
 		}
 
 		return records, nil
@@ -327,11 +428,4 @@ func (h *DDNSHandler) isIPQuery(q dns.Question) int {
 	default:
 		return notIPQuery
 	}
-}
-
-func UnFqdn(s string) string {
-	if dns.IsFqdn(s) {
-		return s[:len(s)-1]
-	}
-	return s
 }

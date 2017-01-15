@@ -1,7 +1,6 @@
 package ddns
 
 import (
-	"net"
 	"time"
 
 	"sync"
@@ -27,15 +26,10 @@ func toDnsType(t model.RecodeType) uint16 {
 	}
 }
 
-type rRecode struct {
-	val string
-	ttl int
-}
-
 type fqdn string
 type domainCache struct {
 	domains  map[fqdn][]*model.Recode
-	rdomains map[fqdn][]rRecode
+	rdomains map[fqdn][]recode
 }
 
 func (d domainCache) append(domain string, r *model.Recode) {
@@ -59,65 +53,57 @@ func (d domainCache) append(domain string, r *model.Recode) {
 			}
 
 			if _, b := d.rdomains[raddr]; !b {
-				d.rdomains[raddr] = []rRecode{}
+				d.rdomains[raddr] = []recode{}
 			}
-			d.rdomains[raddr] = append(d.rdomains[raddr], rRecode{val: domain, ttl: r.TTL})
+			d.rdomains[raddr] = append(d.rdomains[raddr], recode{domain, r.TTL, dns.TypePTR})
 		}
 	}
 }
 
-func (d domainCache) getValue(host, domain string, qtype uint16) ([]net.IP, int, bool) {
+func (d domainCache) getAddrValue(host, domain string, qtype uint16) []recode {
+
+	if qtype != dns.TypeA && qtype != dns.TypeAAAA {
+		return nil
+	}
 
 	domain = dns.Fqdn(domain)
 	ds, exist := d.domains[fqdn(domain)]
 	if !exist {
-		return nil, 0, false
+		return nil
 	}
 
-	switch qtype {
-	case dns.TypeA, dns.TypeAAAA:
-
-		ips := []net.IP{}
-		ttl := 0
-		for _, r := range ds {
-			if toDnsType(r.RecordType) != qtype || r.RecordHost != host {
-				continue
-			}
-
-			ip := net.ParseIP(r.RecodeValue)
-			if ip == nil {
-				log.Warn("invalid ip [%v], type [%v]", r.RecodeValue, dns.TypeToString[qtype])
-				continue
-			}
-			if qtype == dns.TypeA {
-				ip = ip.To4()
-			} else {
-				if ip.To4() == nil {
-					ip = ip.To16()
-				} else {
-					ip = nil
-				}
-			}
-			if ip != nil {
-				ips = append(ips, ip)
-				if ttl > r.TTL {
-					ttl = r.TTL
-				}
-			}
+	ips := []recode{}
+	for _, r := range ds {
+		if toDnsType(r.RecordType) != qtype || r.RecordHost != host {
+			continue
 		}
-		if len(ips) > 0 {
-			return ips, ttl, true
-		}
+
+		ips = append(ips, recode{r.RecodeValue, r.TTL, qtype})
 	}
-	return nil, 0, false
+
+	return ips
 }
 
-func (d domainCache) getReverseValue(addr string) []rRecode {
-	name := fqdn(dns.Fqdn(addr))
-	if v, b := d.rdomains[name]; b {
-		return v
+func (d domainCache) getCnameValue(host, domain string) *recode {
+
+	domain = dns.Fqdn(domain)
+	ds, exist := d.domains[fqdn(domain)]
+	if !exist {
+		return nil
 	}
+
+	for _, r := range ds {
+		if r.RecordType == model.CNAME || r.RecordHost == host {
+			return &recode{r.RecodeValue, r.TTL, dns.TypeCNAME}
+		}
+	}
+
 	return nil
+}
+
+func (d domainCache) getReverseValue(addr string) []recode {
+	name := fqdn(dns.Fqdn(addr))
+	return d.rdomains[name]
 }
 
 type DBRecodes struct {
@@ -130,7 +116,6 @@ type DBRecodes struct {
 }
 
 func NewDBRecodes(db data.IDatabase) *DBRecodes {
-
 	dr := &DBRecodes{db: db}
 	dr.dcache = &domainCache{}
 	dr.cacheVersion = -1
@@ -138,30 +123,70 @@ func NewDBRecodes(db data.IDatabase) *DBRecodes {
 	return dr
 }
 
-func (d *DBRecodes) Get(domain string, qtype uint16) ([]net.IP, int, bool) {
+func (d *DBRecodes) GetAddress(domain string, qtype uint16) []recode {
 	if qtype != dns.TypeA && qtype != dns.TypeAAAA {
-		log.Debug("not implement for %v", dns.TypeToString[qtype])
-		return nil, 0, false
+		return nil
+	}
+
+	d.RLock()
+	defer d.RUnlock()
+
+	d.RLock()
+	defer d.RUnlock()
+
+	dm := strings.ToLower(domain)
+	ips := d.dcache.getAddrValue("@", dm, qtype)
+
+	hosts := strings.SplitN(dm, ".", 2)
+	if len(hosts) == 2 {
+		sips := d.dcache.getAddrValue(hosts[0], hosts[1], qtype)
+		if len(sips) > 0 {
+			ips = append(ips, sips...)
+		}
+	}
+
+	return ips
+}
+
+func (d *DBRecodes) GetCNAMERecode(domain string) *recode {
+
+	dm := strings.ToLower(domain)
+	hosts := strings.SplitN(dm, ".", 2)
+	if len(hosts) == 2 {
+		return d.dcache.getCnameValue(hosts[0], hosts[1])
+	}
+
+	return nil
+}
+
+func (d *DBRecodes) GetAddrCname(domain string, qtype uint16) []recode {
+
+	if qtype != dns.TypeA && qtype != dns.TypeAAAA || qtype == dns.TypeCNAME {
+		return nil
 	}
 
 	d.RLock()
 	defer d.RUnlock()
 
 	dm := strings.ToLower(domain)
-	ips, ttl, exist := d.dcache.getValue("@", dm, qtype)
-	if exist {
-		return ips, ttl, exist
-	}
+	ips := d.dcache.getAddrValue("@", dm, qtype)
 
 	hosts := strings.SplitN(dm, ".", 2)
 	if len(hosts) == 2 {
-		return d.dcache.getValue(hosts[0], hosts[1], qtype)
+		sips := d.dcache.getAddrValue(hosts[0], hosts[1], qtype)
+		if len(sips) > 0 {
+			ips = append(ips, sips...)
+		}
+
+		if cname := d.dcache.getCnameValue(hosts[0], hosts[1]); cname != nil {
+			ips = append(ips, *cname)
+		}
 	}
 
-	return nil, 0, false
+	return ips
 }
 
-func (d *DBRecodes) ReverseGet(name string) []rRecode {
+func (d *DBRecodes) ReverseGet(name string) []recode {
 	d.RLock()
 	defer d.RUnlock()
 
@@ -179,7 +204,7 @@ func (d *DBRecodes) update() {
 		return
 	}
 
-	dcache := &domainCache{map[fqdn][]*model.Recode{}, map[fqdn][]rRecode{}}
+	dcache := &domainCache{map[fqdn][]*model.Recode{}, map[fqdn][]recode{}}
 	for _, domain := range ds {
 		recodes, err := d.db.GetRecodes(domain.ID, 0, -1)
 		if err != nil {

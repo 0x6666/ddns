@@ -29,12 +29,6 @@
 	function getTableHeight() {
 		return $(window).height() - $('h1').outerHeight(true);
 	}
-	function totalTextFormatter(data) {
-		return 'Total';
-	}
-	function totalNameFormatter(data) {
-		return data.length;
-	}
 	function rowStyle(row, index) {
 		if (row.id === '') {
 			return { classes: 'new-row' };
@@ -50,7 +44,7 @@
 			operateEvents = {
 				'click .save': function (e, value, row, idx) {
 					if (row.id && row.id > 0) {
-						ddns_update_recode(row.id, { name: row.name, value: row.value, ttl: row.ttl, dynamic: row.dynamic },
+						ddns_update_recode(row.id, { name: row.name, type: row.type, value: row.value, ttl: row.ttl, dynamic: row.dynamic },
 							function (rspData) {
 								if (rspData.code === "ok") {
 									alert("ok");
@@ -60,8 +54,7 @@
 										msg += ("   " + rspData.msg);
 									alert(msg);
 								}
-							},
-							function (a, b, c) { });
+							});
 					} else {
 						ddns_new_recode(
 							did,
@@ -124,32 +117,28 @@
 							valign: 'middle',
 							visible: false,
 							//sortable: true,
-							footerFormatter: totalTextFormatter
 						}, {
 							field: 'host',
 							title: 'Host Recode',
 							//sortable: true,
 							editable: true,
-							footerFormatter: totalNameFormatter,
 							align: 'center'
 						}, {
 							field: 'value',
 							title: 'Recode Value',
 							editable: true,
-							footerFormatter: totalNameFormatter,
 							align: 'center'
 						}, {
 							field: 'type',
 							title: 'Recode Type',
-							footerFormatter: totalNameFormatter,
 							align: 'center',
 							editable: {
 								type: 'select',
 								value: 1,
 								source: [
-									{value: 1, text: 'A'},
-									{value: 2, text: 'AAAA'},
-									{value: 3, text: 'CNAME'}
+									{ value: 1, text: 'A' },
+									{ value: 2, text: 'AAAA' },
+									{ value: 3, text: 'CNAME' }
 								]
 							},
 						}, {
@@ -157,14 +146,12 @@
 							title: 'TTL',
 							//sortable: true,
 							editable: true,
-							footerFormatter: totalNameFormatter,
 							align: 'center'
 						}, {
 							field: 'dynamic',
 							title: 'Dynamic',
 							//sortable: true,
 							//editable: true,
-							footerFormatter: totalNameFormatter,
 							align: 'center',
 							formatter: formatDynamic,
 							events: {
@@ -186,17 +173,10 @@
 						}
 					]
 				],
-				queryParams: function (params) {
-					return params;
-				},
 				responseHandler: responseHandler,
 				url: "/domain/" + did + "/recodes",
 				rowStyle: rowStyle
 			});
-			// sometimes footer render error.
-			//setTimeout(function () {
-			//	$table.bootstrapTable('resetView');
-			//}, 200);
 
 			$remove.click(function () {
 				var ids = getIdSelections();
@@ -373,12 +353,10 @@
 							valign: 'middle',
 							formatter: formatId,
 							//visible: false,
-							//footerFormatter: totalTextFormatter
 						}, {
 							field: 'domain',
 							title: 'Domain',
 							editable: true,
-							footerFormatter: totalNameFormatter,
 							align: 'center'
 						}, {
 							field: 'operate',
@@ -396,24 +374,6 @@
 				rowStyle: rowStyle
 			});
 
-			$table.on('check.bs.table uncheck.bs.table ' +
-				'check-all.bs.table uncheck-all.bs.table', function () {
-					$remove.prop('disabled', !$table.bootstrapTable('getSelections').length);
-					// save your data, here just save the current page
-					selections = getIdSelections();
-					// push or splice the selections if you want to save all data selections
-				});
-			$table.on('expand-row.bs.table', function (e, index, row, $detail) {
-				if (index % 2 == 1) {
-					$detail.html('Loading from ajax request...');
-					$.get('LICENSE', function (res) {
-						$detail.html(res.replace(/\n/g, '<br>'));
-					});
-				}
-			});
-			$table.on('all.bs.table', function (e, name, args) {
-				console.log(name, args);
-			});
 			$remove.click(function () {
 				var ids = getIdSelections();
 				$table.bootstrapTable('remove', {

@@ -82,7 +82,9 @@ func createRecodeFromForm(c *gin.Context) *model.Recode {
 		r.Dynamic = true
 	}
 
-	r.TTL, _ = strconv.Atoi(c.DefaultPostForm("ttl", "600"))
+	ttl, _ := strconv.Atoi(c.DefaultPostForm("ttl", "600"))
+
+	r.TTL = uint32(ttl)
 	if r.TTL == 0 {
 		r.TTL = 600
 	}
@@ -597,10 +599,15 @@ func (h *handler) updateRecode(c *gin.Context) {
 		r.RecodeValue = c.DefaultPostForm("value", r.RecodeValue)
 	}
 
-	r.TTL, _ = strconv.Atoi(c.DefaultPostForm("ttl", fmt.Sprintf("%v", r.TTL)))
+	ttl, _ := strconv.Atoi(c.DefaultPostForm("ttl", fmt.Sprintf("%v", r.TTL)))
+
+	r.TTL = uint32(ttl)
 	if r.TTL == 0 {
 		r.TTL = 600
 	}
+
+	t, _ := strconv.Atoi(c.DefaultPostForm("type", fmt.Sprintf("%v", model.CNAME)))
+	r.RecordType = model.RecodeType(t)
 
 	err = h.ws.db.UpdateRecode(r.ID, r)
 	if err != nil {
