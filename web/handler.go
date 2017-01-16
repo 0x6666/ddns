@@ -71,27 +71,6 @@ func requestType(r *http.Request) string {
 	return accept[0]
 }
 
-func createRecodeFromForm(c *gin.Context) *model.Recode {
-
-	r := &model.Recode{}
-	r.RecordHost = c.PostForm("host")
-	r.RecodeValue = c.PostForm("value")
-	t, _ := strconv.Atoi(c.DefaultPostForm("type", "1"))
-	r.RecordType = model.RecodeType(t)
-	if len(r.RecodeValue) == 0 {
-		r.Dynamic = true
-	}
-
-	ttl, _ := strconv.Atoi(c.DefaultPostForm("ttl", "600"))
-
-	r.TTL = uint32(ttl)
-	if r.TTL == 0 {
-		r.TTL = 600
-	}
-
-	return r
-}
-
 type handler struct {
 	ws      *WebServer
 	envData map[string]interface{}
@@ -290,16 +269,16 @@ func (h *handler) getDomains(c *gin.Context) {
 //
 func (h *handler) newDomain(c *gin.Context) {
 
-	d := h.createDomainFromForm(c)
-	if len(d.DomainName) == 0 {
+	d, err := h.createDomainFromForm(c)
+	if err != nil {
 		c.JSON(http.StatusOK, JsonMap{
 			"code": CodeInvalidParam,
-			"msg":  "domain name can't be empty",
+			"msg":  err.Error(),
 		})
 		return
 	}
 
-	_, err := h.ws.db.FindDomainByName(d.DomainName)
+	_, err = h.ws.db.FindDomainByName(d.DomainName)
 	if err == nil {
 		c.JSON(http.StatusOK, JsonMap{
 			"code": CodeInvalidParam,
@@ -351,11 +330,11 @@ func (h *handler) updateDomain(c *gin.Context) {
 		return
 	}
 
-	newD := h.createDomainFromForm(c)
-	if len(newD.DomainName) == 0 {
+	newD, err := h.createDomainFromForm(c)
+	if err != nil {
 		c.JSON(http.StatusOK, JsonMap{
 			"code": CodeInvalidParam,
-			"msg":  "domain name can't be empty",
+			"msg":  err.Error(),
 		})
 		return
 	}
@@ -518,11 +497,11 @@ func (h *handler) newRecode(c *gin.Context) {
 		return
 	}
 
-	recode := createRecodeFromForm(c)
-	if len(recode.RecordHost) == 0 {
+	recode, err := h.createRecodeFromForm(c, d)
+	if err != nil {
 		c.JSON(http.StatusOK, JsonMap{
 			"code": CodeInvalidParam,
-			"msg":  "recode name can't be empty",
+			"msg":  err.Error(),
 		})
 		return
 	}
@@ -587,30 +566,31 @@ func (h *handler) updateRecode(c *gin.Context) {
 		return
 	}
 
-	r.RecordHost = c.DefaultPostForm("name", r.RecordHost)
-	def := "false"
-	if r.Dynamic {
-		def = "true"
-	}
-	def = c.DefaultPostForm("dynamic", def)
-	r.Dynamic = (def == "true")
-
-	if !r.Dynamic {
-		r.RecodeValue = c.DefaultPostForm("value", r.RecodeValue)
-	}
-
-	ttl, _ := strconv.Atoi(c.DefaultPostForm("ttl", fmt.Sprintf("%v", r.TTL)))
-
-	r.TTL = uint32(ttl)
-	if r.TTL == 0 {
-		r.TTL = 600
-	}
-
-	t, _ := strconv.Atoi(c.DefaultPostForm("type", fmt.Sprintf("%v", model.CNAME)))
-	r.RecordType = model.RecodeType(t)
-
-	err = h.ws.db.UpdateRecode(r.ID, r)
+	d, err := h.ws.db.GetDomain(r.DomainID)
 	if err != nil {
+		log.Error(err.Error())
+		c.JSON(http.StatusOK, JsonMap{
+			"code": CodeInvalidParam,
+			"msg":  err.Error(),
+		})
+		return
+	}
+
+	newR, err := h.createRecodeFromForm(c, d)
+	if err != nil {
+		log.Error(err.Error())
+		c.JSON(http.StatusOK, JsonMap{
+			"code": CodeInvalidParam,
+			"msg":  err.Error(),
+		})
+		return
+	}
+	newR.ID = r.ID
+	newR.DomainID = r.DomainID
+
+	err = h.ws.db.UpdateRecode(newR.ID, newR)
+	if err != nil {
+		log.Error(err.Error())
 		h.rspError(c, err)
 	} else {
 		h.rspOk(c)

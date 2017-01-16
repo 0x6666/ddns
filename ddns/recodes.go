@@ -93,7 +93,7 @@ func (d domainCache) getCnameValue(host, domain string) *recode {
 	}
 
 	for _, r := range ds {
-		if r.RecordType == model.CNAME || r.RecordHost == host {
+		if r.RecordType == model.CNAME && r.RecordHost == host {
 			return &recode{r.RecodeValue, r.TTL, dns.TypeCNAME}
 		}
 	}

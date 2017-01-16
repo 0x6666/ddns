@@ -100,7 +100,7 @@
 			operateEvents = {
 				'click .save': function (e, value, row, idx) {
 					if (row.id && row.id > 0) {
-						ddns_update_recode(row.id, { name: row.name, type: row.type, value: row.value, ttl: row.ttl, dynamic: row.dynamic },
+						ddns_update_recode(row.id, { host: row.host, type: row.type, value: row.value, ttl: row.ttl},
 							function (rspData) {
 								if (rspData.code === "ok") {
 									alert("ok");

@@ -11,10 +11,11 @@ const DefUserID int64 = 1
 type RecodeType uint16
 
 const (
-	_NONE RecodeType = iota
+	NONE_ RecodeType = iota
 	A
 	AAAA
 	CNAME
+	LAST_
 )
 
 type Model struct {
@@ -64,7 +65,7 @@ type Recode struct {
 	Model
 	DomainID int64 `gorm:"column:domain_id;index"`
 
-	Dynamic   bool           `gorm:"column:dynamic"` //是否未动态
+	Dynamic   bool           `gorm:"unique_index:recode_unique;column:dynamic"` //是否未动态
 	UpdateKey sql.NullString `gorm:"column:key;unique_index"`
 	Synced    bool           `gorm:"column:synced;default:'false'"` //for slave
 
