@@ -27,13 +27,17 @@ type SectionItem struct {
 type SectionItems []*SectionItem
 
 func validateDomainName(domain string) bool {
+	//todo
+	return true
 
-	log.Info(domain)
+	/*	log.Info(domain)
 
-	RegExp := regexp.MustCompile(`^(([a-zA-Z]{1})|([a-zA-Z]{1}[a-zA-Z]{1})|([a-zA-Z]{1}[0-9]{1})|([0-9]{1}[a-zA-Z]{1})|([a-zA-Z0-9][a-zA-Z0-9-_]{1,61}[a-zA-Z0-9]))\.([a-zA-Z]{2,6}|[a-zA-Z0-9-]{2,30}\.[a-zA-Z
- ]{2,3})$`)
+		RegExp := regexp.MustCompile(`^(([a-zA-Z]{1})|([a-zA-Z]{1}[a-zA-Z]{1})|([a-zA-Z]{1}[0-9]{1})|([0-9]{1}[a-zA-Z]{1})|([a-zA-Z0-9][a-zA-Z0-9-_]{1,61}[a-zA-Z0-9]))\.([a-zA-Z]{2,6}|[a-zA-Z0-9-]{2,30}\.[a-zA-Z]{2,3})$`)
+		res := RegExp.MatchString(domain)
+		log.Info("%v", res)
 
-	return RegExp.MatchString(domain)
+		return RegExp.MatchString(domain)
+	*/
 }
 
 func validIP4(ipAddress string) bool {
