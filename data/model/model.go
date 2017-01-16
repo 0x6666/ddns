@@ -63,9 +63,9 @@ func (Domain) TableName() string {
 
 type Recode struct {
 	Model
-	DomainID int64 `gorm:"column:domain_id;index"`
+	DomainID int64 `gorm:"unique_index:recode_unique;column:domain_id;index"`
 
-	Dynamic   bool           `gorm:"unique_index:recode_unique;column:dynamic"` //是否未动态
+	Dynamic   bool           `gorm:"column:dynamic"` //是否未动态
 	UpdateKey sql.NullString `gorm:"column:key;unique_index"`
 	Synced    bool           `gorm:"column:synced;default:'false'"` //for slave
 
