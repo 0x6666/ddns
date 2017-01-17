@@ -1,8 +1,6 @@
 package ddns
 
 import (
-	"time"
-
 	"sync"
 
 	"strings"
@@ -120,6 +118,7 @@ func NewDBRecodes(db data.IDatabase) *DBRecodes {
 	dr.dcache = &domainCache{}
 	dr.cacheVersion = -1
 	dr.refresh()
+
 	return dr
 }
 
@@ -204,6 +203,8 @@ func (d *DBRecodes) update() {
 		return
 	}
 
+	log.Info("update data cache")
+
 	dcache := &domainCache{map[fqdn][]*model.Recode{}, map[fqdn][]recode{}}
 	for _, domain := range ds {
 		recodes, err := d.db.GetRecodes(domain.ID, 0, -1)
@@ -225,11 +226,15 @@ func (d *DBRecodes) update() {
 
 func (d *DBRecodes) refresh() {
 
-	ticker := time.NewTicker(time.Second * 5)
+	d.update()
+	d.db.RegListener(d.update)
+
+	/*ticker := time.NewTicker(time.Second * 5)
 	go func() {
 		for {
 			d.update()
 			<-ticker.C
 		}
 	}()
+	*/
 }

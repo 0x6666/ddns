@@ -2,6 +2,8 @@ package data
 
 import "github.com/inimei/ddns/data/model"
 
+type OnDomainChanged func()
+
 type IDomains interface {
 	NewDomain(userID int64, domain *model.Domain) (int64, error)
 	UpdateDomain(domainID int64, newName string) error
@@ -35,4 +37,7 @@ type IDatabase interface {
 	BeginTransaction() (IDatabase, error)
 	Rollback() error
 	Commit() error
+
+	RegListener(l OnDomainChanged)
+	UnRegListener(l OnDomainChanged)
 }

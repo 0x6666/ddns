@@ -1,6 +1,8 @@
 package sqlite
 
 import (
+	"reflect"
+	"runtime"
 	"sync"
 
 	"github.com/inimei/backup/log"
@@ -17,8 +19,9 @@ type SqliteDB struct {
 	db   *gorm.DB
 	path string
 
-	version int64
-	mutex   sync.RWMutex
+	version  int64
+	mutex    sync.RWMutex
+	listener map[string]data.OnDomainChanged
 }
 
 func NewSqlite() *SqliteDB {
@@ -120,8 +123,14 @@ func (s *SqliteDB) GetVersion() int64 {
 
 func (s *SqliteDB) updateVersion() {
 	s.mutex.Lock()
-	defer s.mutex.Unlock()
 	s.version = s.version + 1
+	s.mutex.Unlock()
+
+	s.mutex.RLock()
+	defer s.mutex.RUnlock()
+	for _, l := range s.listener {
+		l()
+	}
 }
 
 func (s *SqliteDB) SetVersion(v int64) {
@@ -155,4 +164,55 @@ func (s *SqliteDB) Commit() error {
 	err := s.db.Commit().Error
 	go s.updateVersion()
 	return err
+}
+
+//RegListener ...
+func (s *SqliteDB) RegListener(l data.OnDomainChanged) {
+	s.mutex.Lock()
+	defer s.mutex.Unlock()
+
+	if l == nil {
+		log.Warn("listener is nil")
+		return
+	}
+
+	if s.listener == nil {
+		s.listener = map[string]data.OnDomainChanged{}
+	}
+
+	funcName := runtime.FuncForPC(reflect.ValueOf(l).Pointer()).Name()
+
+	for n := range s.listener {
+		if funcName == n {
+			return
+		}
+	}
+	log.Debug("reg listener [%v]", funcName)
+
+	s.listener[funcName] = l
+}
+
+//UnRegListener ...
+func (s *SqliteDB) UnRegListener(l data.OnDomainChanged) {
+	s.mutex.Lock()
+	defer s.mutex.Unlock()
+
+	if l == nil {
+		log.Warn("listener is nil")
+		return
+	}
+
+	if s.listener == nil {
+		return
+	}
+
+	funcName := runtime.FuncForPC(reflect.ValueOf(l).Pointer()).Name()
+
+	for n := range s.listener {
+		if funcName == n {
+			log.Debug("unreg listener [%v]", funcName)
+			delete(s.listener, funcName)
+			return
+		}
+	}
 }
