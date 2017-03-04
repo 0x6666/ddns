@@ -403,44 +403,11 @@
 	}
 
 	function on_init_downloads_view() {
-		$table = $('#dtable');
-		var $dbtn = $('#dbtn'),
+		var $table = $('#dtable'),
+			$dbtn = $('#dbtn'),
 			$DInput = $("#d-input");
 
 		(function () {
-			function operateFormatter(value, row, index) {
-				return [
-					'<a class="download" href="'+row.dest+'" target=_blank title="Like">',
-					'<i class="glyphicon glyphicon-download-alt"></i>',
-					'</a>',
-					'<a class="remove" href="javascript:void(0)" title="Remove">',
-					'<i class="glyphicon glyphicon-remove"></i>',
-					'</a>'
-				].join('');
-			}
-			function srcFormatter(value, row, index) {
-				return '<a href="' + value + '">' + value + '</a>';
-			}
-			function progressFormatter(value, row, index) {
-				if (row.size && row.size > 0) {
-					if (row.transferred !== undefined) {
-						return (row.transferred / (row.size * 1.0) * 100).toFixed(2) + "%";
-					} else {
-						return "0%";
-					}
-				}
-			}
-			function sizeFormatter(value, row, index) {
-				if (value < 1024) {
-					return value.toFixed(2) + "Byte";
-				} else if (value < 1024 * 1024) {
-					return (value / 1024.0).toFixed(2) + "K";
-				} else if (value < 1024 * 1024 * 1024) {
-					return (value / (1024.0*1024)).toFixed(2) + "M";
-				} else {
-					return (value / (1024.0*1024 * 1024)).toFixed(2) + "G";
-				}
-			}
 			$table.bootstrapTable({
 				height: getTableHeight(),
 				columns: [
@@ -450,8 +417,7 @@
 							field: 'id',
 							align: 'center',
 							valign: 'middle',
-							//formatter: formatId,
-							//visible: false,
+							visible: false,
 						}, {
 							field: 'name',
 							title: 'Name',
@@ -470,6 +436,11 @@
 							field: 'progress',
 							title: 'Progress',
 							formatter: progressFormatter,
+							align: 'center'
+						}, {
+							field: 'bytesPerSecond',
+							title: 'Speed',
+							formatter: speedFormatter,
 							align: 'center'
 						}, {
 							field: 'operate',
@@ -525,7 +496,83 @@
 					"rows": []
 				};
 			}
+			function operateFormatter(value, row, index) {
+				return [
+					'<a class="download" href="' + row.dest + '" target=_blank title="Like">',
+					'<i class="glyphicon glyphicon-download-alt"></i>',
+					'</a>',
+					'<a class="remove" href="javascript:void(0)" title="Remove">',
+					'<i class="glyphicon glyphicon-remove"></i>',
+					'</a>'
+				].join('');
+			}
+			function srcFormatter(value, row, index) {
+				return '<a href="' + value + '">' + value + '</a>';
+			}
+			function progressFormatter(value, row, index) {
+				if (row.size && row.size > 0) {
+					if (row.transferred !== undefined) {
+						return precision(row.transferred / (row.size * 1.0) * 100) + "%";
+					} else {
+						return "0%";
+					}
+				}
+			}
+			function speedFormatter(value, row, index){
+				if (value < 1024) {
+					return precision(value) + "Byte/s";
+				} else if (value < 1024 * 1024) {
+					return precision(value / 1024.0) + "Kb/s";
+				} else if (value < 1024 * 1024 * 1024) {
+					return precision(value / (1024.0 * 1024)) + "Mb/s";
+				} else {
+					return precision(value / (1024.0 * 1024 * 1024)) + "Gb/s";
+				}
+			}
+			function sizeFormatter(value, row, index) {
+				if (value < 1024) {
+					return precision(value) + "Byte";
+				} else if (value < 1024 * 1024) {
+					return precision(value / 1024.0) + "K";
+				} else if (value < 1024 * 1024 * 1024) {
+					return precision(value / (1024.0 * 1024)) + "M";
+				} else {
+					return precision(value / (1024.0 * 1024 * 1024)) + "G";
+				}
+			}
 		})();
+		
+		var refreshTable = function () {
+			d_get_downloads(function (data) {
+				var tableData = $table.bootstrapTable('getData');
+				var updateTable = function (task) {
+					var i = 0;
+					for (; i < tableData.length; ++i) {
+						if (tableData[i].dest === task.dest) {
+							if (tableData[i].transferred !== task.transferred || tableData[i].bytesPerSecond !== task.bytesPerSecond) {
+								tableData[i].transferred = task.transferred;
+								tableData[i].bytesPerSecond = task.bytesPerSecond;
+								$table.bootstrapTable('updateRow', i, tableData[i]);
+							}
+							break;
+						}
+					}
+					if (i === tableData.length) {
+						$table.bootstrapTable('refresh');
+						return false;
+					}
+				};
+				if (data.code === "ok" && data.tasks && data.tasks.length) {
+					$.each(data.tasks, function (index, task, array) {
+						if (updateTable(task) === false) {
+							return false;
+						}
+					});
+				}
+			});
+			setTimeout(refreshTable, 500);
+		};
+		refreshTable();
 	}
 
 	exports.on_init_recode_lists = on_init_recode_lists;

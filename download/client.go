@@ -120,3 +120,7 @@ func (d *DownloadClent) FileName() string {
 func (d *DownloadClent) IsRunning() bool {
 	return d.isRunning
 }
+
+func (d *DownloadClent) AverageBytesPerSecond() uint64 {
+	return uint64(d.resp.AverageBytesPerSecond())
+}

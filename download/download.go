@@ -5,11 +5,12 @@ import (
 )
 
 type Task struct {
-	Size             uint64
-	BytesTransferred uint64
-	Src              string
-	Dest             string
-	Id               int
+	Size                  uint64
+	BytesTransferred      uint64
+	AverageBytesPerSecond uint64
+	Src                   string
+	Dest                  string
+	Id                    int
 }
 
 var clientIDBase = 0
@@ -53,6 +54,7 @@ func (d *DownloadMgr) Tasks() []*Task {
 		task.Src = t.Src
 		task.Dest = t.FileName()
 		task.Id = t.id
+		task.AverageBytesPerSecond = t.AverageBytesPerSecond()
 		tasks = append(tasks, &task)
 	}
 

@@ -6,6 +6,7 @@
 			type: type,
 			url: api,
 			data: data,
+			dataType: "json",
 			cache: false,
 			async: (async === undefined || async) ? true : false,
 			contentType: (!contentType || contentType.length === 0) ? 'application/x-www-form-urlencoded; charset=UTF-8' : contentType,
@@ -49,6 +50,10 @@
 		basic_func("POST", "/downloads", { "url": url }, suCallback, failCallback);
 	};
 
+	var get_downloads = function(suCallback, failCallback){
+		basic_func("GET", "/downloads", undefined, suCallback, failCallback);
+	};
+
 	exports.ddns_get_recodes = get_recodes;
 	exports.ddns_new_domain = new_domain;
 	exports.ddns_delete_domain = delete_domain;
@@ -61,5 +66,6 @@
 
 	//download api
 	exports.d_download_url = download_url;
+	exports.d_get_downloads = get_downloads;
 
 })((typeof (exports) === "object" ? exports : window), jQuery);

@@ -47,6 +47,11 @@
 		iterate();
 	};
 
+	var precision = function (f){
+		return f.toFixed(2) * 100 / 100.0;
+	};
+
 	exports.load_series = load_series;
+	exports.precision = precision;
 
 })((typeof (exports) === "object" ? exports : window), jQuery);

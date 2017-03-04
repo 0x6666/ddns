@@ -27,7 +27,8 @@ import (
 //			"src": "src",
 //			"dest": "dest",
 //			"size":	size,
-//			"Transferred": Transferred
+//			"Transferred": Transferred,
+//			"bytesPerSecond": bytesPerSecond
 //		]
 //	}
 //
@@ -55,12 +56,13 @@ func (h *handler) getDownloads(c *gin.Context) {
 		for _, t := range tasks {
 			files[t.Dest] = true
 			tasksArray = append(tasksArray, JsonMap{
-				"id":          t.Id,
-				"name":        filepath.Base(t.Dest),
-				"src":         t.Src,
-				"dest":        strings.Replace(t.Dest, config.Data.Download.Dest, pFiles, 1),
-				"size":        t.Size,
-				"transferred": t.BytesTransferred,
+				"id":             t.Id,
+				"name":           filepath.Base(t.Dest),
+				"src":            t.Src,
+				"dest":           strings.Replace(t.Dest, config.Data.Download.Dest, pFiles, 1),
+				"size":           t.Size,
+				"transferred":    t.BytesTransferred,
+				"bytesPerSecond": t.AverageBytesPerSecond,
 			})
 		}
 	}
@@ -78,12 +80,13 @@ func (h *handler) getDownloads(c *gin.Context) {
 				return nil
 			}
 			tasksArray = append(tasksArray, JsonMap{
-				"id":          0,
-				"name":        filepath.Base(path),
-				"src":         "",
-				"dest":        strings.Replace(path, config.Data.Download.Dest, pFiles, 1),
-				"size":        f.Size(),
-				"transferred": f.Size(),
+				"id":             0,
+				"name":           filepath.Base(path),
+				"src":            "",
+				"dest":           strings.Replace(path, config.Data.Download.Dest, pFiles, 1),
+				"size":           f.Size(),
+				"transferred":    f.Size(),
+				"bytesPerSecond": 0,
 			})
 			return nil
 		})
