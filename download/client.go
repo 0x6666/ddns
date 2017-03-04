@@ -86,7 +86,7 @@ func (d *DownloadClent) start(url string) error {
 			select {
 			case <-ticker.C:
 				if !d.resp.IsComplete() {
-					log.Debug("\033[1AProgress %d / %d bytes (%d%%)\033[K\n", d.resp.BytesTransferred(), d.resp.Size, int(100*d.resp.Progress()))
+					log.DebugLine("Progress %d / %d bytes (%d%%)", d.resp.BytesTransferred(), d.resp.Size, int(100*d.resp.Progress()))
 				} else if d.resp.Error != nil {
 					log.Error("Error downloading %s: %v", url, d.resp.Error)
 					d.Error = d.resp.Error

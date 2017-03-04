@@ -29,6 +29,7 @@
 	function getTableHeight() {
 		return $(window).height() - $('h1').outerHeight(true);
 	}
+
 	function rowStyle(row, index) {
 		if (row.id === '') {
 			return { classes: 'new-row' };
@@ -37,8 +38,8 @@
 	}
 
 	function on_init_recode_lists(did) {
-		$table = $('#tb_recodes');
-		var $remove = $('#remove'),
+		var $table = $('#tb_recodes'),
+			$remove = $('#remove'),
 			$add = $('#add'),
 			selections = [],
 			operateEvents = {
@@ -246,8 +247,8 @@
 	}
 
 	function on_init_domians_view() {
-		$table = $('#tb_domains');
-		var $remove = $('#remove'),
+		var $table = $('#tb_domains'),
+			$remove = $('#remove'),
 			$add = $('#add'),
 			selections = [],
 			operateEvents = {
@@ -422,12 +423,8 @@
 							field: 'name',
 							title: 'Name',
 							align: 'left',
-						}, /*{
-							field: 'src',
-							title: 'Src URL',
-							align: 'center',
-							formatter: srcFormatter
-						}, */{
+							formatter: nameFormatter
+						}, {
 							field: 'size',
 							title: 'Size',
 							align: 'right',
@@ -464,6 +461,7 @@
 				d_download_url(url, function (data) {
 					if (data.code === "ok") {
 						$table.bootstrapTable('refresh');
+						$DInput.val("");
 					} else {
 						var msg = data.code;
 						if (data.msg && data.msg.length)
@@ -506,8 +504,10 @@
 					'</a>'
 				].join('');
 			}
-			function srcFormatter(value, row, index) {
-				return '<a href="' + value + '">' + value + '</a>';
+			function nameFormatter(value, row, index) {
+				if (row.src && row.src.length)
+					return '<span title="' + row.src + '">' + value + '</span>';
+				return value;
 			}
 			function progressFormatter(value, row, index) {
 				if (row.size && row.size > 0) {
@@ -518,7 +518,7 @@
 					}
 				}
 			}
-			function speedFormatter(value, row, index){
+			function speedFormatter(value, row, index) {
 				if (value < 1024) {
 					return precision(value) + "Byte/s";
 				} else if (value < 1024 * 1024) {
@@ -541,8 +541,9 @@
 				}
 			}
 		})();
-		
+
 		var refreshTable = function () {
+			if (!document.getElementById('dtable')) return;
 			d_get_downloads(function (data) {
 				var tableData = $table.bootstrapTable('getData');
 				var updateTable = function (task) {
