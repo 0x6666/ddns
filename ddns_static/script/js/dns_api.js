@@ -45,6 +45,10 @@
 		basic_func("PATCH", "/domain/" + did, { "domain": name }, suCallback, failCallback);
 	};
 
+	var download_url = function(url, suCallback, failCallback){
+		basic_func("POST", "/downloads", { "url": url }, suCallback, failCallback);
+	};
+
 	exports.ddns_get_recodes = get_recodes;
 	exports.ddns_new_domain = new_domain;
 	exports.ddns_delete_domain = delete_domain;
@@ -53,4 +57,9 @@
 	exports.ddns_new_recode = new_recode;
 	exports.ddns_delete_recode = delete_recode;
 	exports.ddns_update_recode = update_recode;
+
+
+	//download api
+	exports.d_download_url = download_url;
+
 })((typeof (exports) === "object" ? exports : window), jQuery);

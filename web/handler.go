@@ -20,6 +20,8 @@ import (
 const (
 	pRoot = "/"
 
+	pFiles = "/files"
+
 	pRecodes = "/domain/:did/recodes"
 	pRecode  = "/recode/:rid"
 	pLogin   = "/login"
@@ -30,6 +32,8 @@ const (
 	pDomain  = "/domain/:did"
 
 	pUpdate = "/update"
+
+	pDownloads = "/downloads"
 )
 
 const (
@@ -58,6 +62,7 @@ const (
 	CodeGetSecretKeyError  = "GetSecretKeyError"
 	CodeUserNameError      = "UserNameError"
 	CodePasswordError      = "PasswordError"
+	CodeInvalidURL         = "InvalidURL"
 )
 
 func requestType(r *http.Request) string {

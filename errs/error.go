@@ -12,4 +12,7 @@ var (
 	ErrPtrRecodeNotFound = errors.New("ptr recode not found")
 
 	ErrKeyNotFound = errors.New("key not found")
+
+	ErrDownloadUrlError = errors.New("download url error")
+	ErrTaskAlreadyExist = errors.New("download task Already exist")
 )

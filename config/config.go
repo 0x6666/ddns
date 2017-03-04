@@ -67,16 +67,22 @@ type SqliteSetting struct {
 	Path string `toml:"path"`
 }
 
+type DownloadSetting struct {
+	Enable bool
+	Dest   string `toml:"dest"`
+}
+
 type cfgData struct {
-	Server  ServerSetting  `toml:"server"`
-	Slave   SlaveSetting   `toml:"slave"`
-	Web     WebSetting     `toml:"web"`
-	Sqlite  SqliteSetting  `toml:"sqlite"`
-	Cache   CacheSettings  `toml:"cache"`
-	Resolv  ResolvSettings `toml:"resolv"`
-	Hosts   HostsSettings  `toml:"hosts"`
-	Redis   RedisSettings  `toml:"redis"`
-	Session SessionSetting `toml:"session"`
+	Server   ServerSetting   `toml:"server"`
+	Slave    SlaveSetting    `toml:"slave"`
+	Web      WebSetting      `toml:"web"`
+	Sqlite   SqliteSetting   `toml:"sqlite"`
+	Cache    CacheSettings   `toml:"cache"`
+	Resolv   ResolvSettings  `toml:"resolv"`
+	Hosts    HostsSettings   `toml:"hosts"`
+	Redis    RedisSettings   `toml:"redis"`
+	Session  SessionSetting  `toml:"session"`
+	Download DownloadSetting `toml:"download"`
 }
 
 var Data cfgData
@@ -116,6 +122,27 @@ func initialize(configFilePath string) error {
 
 	if strings.HasSuffix(Data.Web.AssetsImageHost, "/") {
 		Data.Web.AssetsImageHost = strings.TrimSuffix(Data.Web.AssetsImageHost, "/")
+	}
+
+	if Data.Download.Enable {
+		if Data.Download.Dest == "" {
+			Data.Download.Dest = CurDir() + "/download"
+		}
+
+		fi, err := os.Stat(Data.Download.Dest)
+		if os.IsNotExist(err) {
+			if err := os.MkdirAll(Data.Download.Dest, 0755); err != nil {
+				log.Error("create download file path error: %v", err)
+				return err
+			}
+		} else if err != nil {
+			log.Error("os.Stat error: %v", err)
+			return err
+		} else if !fi.IsDir() {
+			err := fmt.Errorf("\"%v\" is not a dir", Data.Download.Dest)
+			log.Error(err.Error())
+			return err
+		}
 	}
 
 	return nil

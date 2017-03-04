@@ -45,6 +45,10 @@
 		basic_func("PATCH", "/domain/" + did, { "domain": name }, suCallback, failCallback);
 	};
 
+	var download_url = function(url, suCallback, failCallback){
+		basic_func("POST", "/downloads", { "url": url }, suCallback, failCallback);
+	};
+
 	exports.ddns_get_recodes = get_recodes;
 	exports.ddns_new_domain = new_domain;
 	exports.ddns_delete_domain = delete_domain;
@@ -53,6 +57,11 @@
 	exports.ddns_new_recode = new_recode;
 	exports.ddns_delete_recode = delete_recode;
 	exports.ddns_update_recode = update_recode;
+
+
+	//download api
+	exports.d_download_url = download_url;
+
 })((typeof (exports) === "object" ? exports : window), jQuery);
 
 (function (exports) {
@@ -100,7 +109,7 @@
 			operateEvents = {
 				'click .save': function (e, value, row, idx) {
 					if (row.id && row.id > 0) {
-						ddns_update_recode(row.id, { host: row.host, type: row.type, value: row.value, ttl: row.ttl},
+						ddns_update_recode(row.id, { host: row.host, type: row.type, value: row.value, ttl: row.ttl },
 							function (rspData) {
 								if (rspData.code === "ok") {
 									alert("ok");
@@ -423,9 +432,6 @@
 						}
 					]
 				],
-				queryParams: function (params) {
-					return params;
-				},
 				responseHandler: responseHandler,
 				rowStyle: rowStyle
 			});
@@ -455,16 +461,144 @@
 			});
 			$(window).resize(function () {
 				$table.bootstrapTable('resetView', {
-					height: getHeight()
+					height: getTableHeight()
 				});
 			});
 		})();
 	}
 
+	function on_init_downloads_view() {
+		$table = $('#dtable');
+		var $dbtn = $('#dbtn'),
+			$DInput = $("#d-input");
+
+		(function () {
+			function operateFormatter(value, row, index) {
+				return [
+					'<a class="download" href="'+row.dest+'" target=_blank title="Like">',
+					'<i class="glyphicon glyphicon-download-alt"></i>',
+					'</a>',
+					'<a class="remove" href="javascript:void(0)" title="Remove">',
+					'<i class="glyphicon glyphicon-remove"></i>',
+					'</a>'
+				].join('');
+			}
+			function srcFormatter(value, row, index) {
+				return '<a href="' + value + '">' + value + '</a>';
+			}
+			function progressFormatter(value, row, index) {
+				if (row.size && row.size > 0) {
+					if (row.transferred !== undefined) {
+						return (row.transferred / (row.size * 1.0) * 100).toFixed(2) + "%";
+					} else {
+						return "0%";
+					}
+				}
+			}
+			function sizeFormatter(value, row, index) {
+				if (value < 1024) {
+					return value.toFixed(2) + "Byte";
+				} else if (value < 1024 * 1024) {
+					return (value / 1024.0).toFixed(2) + "K";
+				} else if (value < 1024 * 1024 * 1024) {
+					return (value / (1024.0*1024)).toFixed(2) + "M";
+				} else {
+					return (value / (1024.0*1024 * 1024)).toFixed(2) + "G";
+				}
+			}
+			$table.bootstrapTable({
+				height: getTableHeight(),
+				columns: [
+					[
+						{
+							title: 'ID',
+							field: 'id',
+							align: 'center',
+							valign: 'middle',
+							//formatter: formatId,
+							//visible: false,
+						}, {
+							field: 'name',
+							title: 'Name',
+							align: 'left',
+						}, /*{
+							field: 'src',
+							title: 'Src URL',
+							align: 'center',
+							formatter: srcFormatter
+						}, */{
+							field: 'size',
+							title: 'Size',
+							align: 'right',
+							formatter: sizeFormatter,
+						}, {
+							field: 'progress',
+							title: 'Progress',
+							formatter: progressFormatter,
+							align: 'center'
+						}, {
+							field: 'operate',
+							title: 'Operate',
+							align: 'center',
+							//events: operateEvents,
+							formatter: operateFormatter
+						}
+					]
+				],
+				responseHandler: responseHandler,
+				rowStyle: rowStyle
+			});
+			$dbtn.click(function () {
+				if ($DInput.val().length === 0) {
+					alert("please enter url...");
+					return;
+				}
+
+				var url = $DInput.val();
+				d_download_url(url, function (data) {
+					if (data.code === "ok") {
+						$table.bootstrapTable('refresh');
+					} else {
+						var msg = data.code;
+						if (data.msg && data.msg.length)
+							msg += ("   " + data.msg);
+						alert(msg);
+					}
+				});
+			});
+			$(window).resize(function () {
+				$table.bootstrapTable('resetView', {
+					height: getTableHeight()
+				});
+			});
+			function responseHandler(res) {
+				if (res) {
+					if (res.code == "ok") {
+						return {
+							"total": res.tasks.length,
+							"rows": res.tasks
+						};
+					} else {
+						var msg = res.code;
+						if (res.msg && res.code.length)
+							msg += ("   " + res.msg);
+						alert(msg);
+					}
+				}
+				return {
+					"total": 0,
+					"rows": []
+				};
+			}
+		})();
+	}
+
 	exports.on_init_recode_lists = on_init_recode_lists;
 	exports.on_init_domians_view = on_init_domians_view;
+	exports.on_init_downloads_view = on_init_downloads_view;
 
 })((typeof (exports) === "object" ? exports : window), jQuery);
+
 
 (function (exports) {
 

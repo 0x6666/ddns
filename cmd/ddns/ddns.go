@@ -12,6 +12,7 @@ import (
 	"github.com/inimei/ddns/data/sqlite"
 	"github.com/inimei/ddns/ddns"
 	"github.com/inimei/ddns/ddns/slave"
+	"github.com/inimei/ddns/download"
 	"github.com/inimei/ddns/web"
 )
 
@@ -49,6 +50,12 @@ func main() {
 		}
 	}
 
+	var dload *download.DownloadMgr
+	if config.Data.Download.Enable {
+		dload = download.NewDownloadMgr()
+		dload.Start()
+	}
+
 	var ws *web.WebServer
 	if config.Data.Server.EnableWeb {
 
@@ -58,7 +65,7 @@ func main() {
 		}
 
 		ws = &web.WebServer{}
-		ws.Start(db)
+		ws.Start(db, dload)
 	}
 
 	if config.Data.Server.Debug {

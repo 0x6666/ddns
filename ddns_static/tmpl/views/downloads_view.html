@@ -1,0 +1,32 @@
+{{define "downloads_view"}}
+
+<div id="toolbar">
+	<div class="input-line input-group">
+		<input id="d-input" type="text" class="d-input" placeholder="Download URL...">
+		<button id="dbtn" class="btn btn-default" type="button">Download</button>
+	</div>
+</div>
+
+<table id="dtable"
+	class="dtable"
+	data-toolbar="#toolbar"
+	data-show-refresh="true"
+	data-show-columns="true"
+	data-minimum-count-columns="2"
+	data-pagination="true"
+	data-id-field="id"
+	data-page-list="[10, 25, 50, 100, ALL]"
+	data-show-footer="false"
+	data-side-pagination="server"
+	data-url="/downloads"
+	data-cache="false"
+	data-data-type="json">
+</table>
+
+	<script>
+		$(document).ready(function () {
+			on_init_downloads_view();
+		});
+	</script>
+
+	{{end}}

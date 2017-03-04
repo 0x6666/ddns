@@ -237,3 +237,15 @@ $item-hover: #333;
 		display: none;
 	}
 }
+
+// Download View
+.input-line {
+	width: auto;
+//	padding-top: 20px;
+	display: inline-block;
+	.d-input {
+		width:400px;
+		overflow-x:visible;
+		overflow-y:visible;
+	}
+}

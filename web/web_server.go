@@ -6,20 +6,23 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/inimei/ddns/config"
 	"github.com/inimei/ddns/data"
+	"github.com/inimei/ddns/download"
 )
 
 type WebServer struct {
 	e    *gin.Engine
 	h    *handler
+	d    *download.DownloadMgr
 	tmpl *tmplHelper
 
 	db data.IDatabase
 }
 
-func (ws *WebServer) Start(db data.IDatabase) {
+func (ws *WebServer) Start(db data.IDatabase, d *download.DownloadMgr) {
 
 	ws.db = db
 	ws.e = gin.Default()
+	ws.d = d
 
 	if !config.Data.Server.Debug {
 		gin.SetMode(gin.ReleaseMode)
@@ -30,6 +33,9 @@ func (ws *WebServer) Start(db data.IDatabase) {
 
 	ws.e.Static("/login", curPath+"/login")
 	ws.e.Static("/assets", curPath+"/assets")
+	if config.Data.Download.Enable {
+		ws.e.Static(pFiles, config.Data.Download.Dest)
+	}
 
 	ws.loadTemplate()
 	ws.regHandler()
@@ -58,6 +64,9 @@ func (ws *WebServer) regHandler() {
 
 	ws.regWebHandler()
 	ws.regAPIHandler()
+	if config.Data.Download.Enable {
+		ws.regDownload()
+	}
 }
 
 func (ws *WebServer) regWebHandler() {
@@ -92,4 +101,12 @@ func (ws *WebServer) regAPIHandler() {
 	group.GET("/recodes", ws.h.apiGetRecodes)
 	group.GET("/dataversion", ws.h.apiGetDataSchemaVersion)
 	group.POST("/update", ws.h.apiUpdateRecode)
+}
+
+func (ws *WebServer) regDownload() {
+	auth := ws.e.Group("", ws.h.CookieAuthMiddleware)
+
+	auth.GET(pDownloads, ws.h.getDownloads)
+	auth.POST(pDownloads, ws.h.startDownloads)
+
 }
