@@ -46,11 +46,14 @@ func (h *handler) getDownloads(c *gin.Context) {
 		return
 	}
 
+	files := map[string]bool{}
+
 	//userid, _ := sessions.GetUserID(c.Request)
 	tasksArray := []JsonMap{}
 	tasks := h.ws.d.Tasks()
 	if len(tasks) != 0 {
 		for _, t := range tasks {
+			files[t.Dest] = true
 			tasksArray = append(tasksArray, JsonMap{
 				"id":          t.Id,
 				"name":        filepath.Base(t.Dest),
@@ -64,6 +67,9 @@ func (h *handler) getDownloads(c *gin.Context) {
 
 	filepath.Walk(config.Data.Download.Dest,
 		func(path string, f os.FileInfo, err error) error {
+			if b := files[path]; b {
+				return nil
+			}
 			if f == nil {
 				log.Error("walk file error: %v", err)
 				return err
