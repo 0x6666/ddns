@@ -11,10 +11,10 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
-	"github.com/inimei/backup/log"
-	"github.com/inimei/ddns/config"
-	"github.com/inimei/ddns/data/model"
-	"github.com/inimei/ddns/web/sessions"
+	"github.com/yangsongfwd/backup/log"
+	"github.com/yangsongfwd/ddns/config"
+	"github.com/yangsongfwd/ddns/data/model"
+	"github.com/yangsongfwd/ddns/web/sessions"
 )
 
 const (

@@ -5,11 +5,11 @@ import (
 	"runtime"
 	"sync"
 
-	"github.com/inimei/backup/log"
-	"github.com/inimei/ddns/config"
-	"github.com/inimei/ddns/data"
-	"github.com/inimei/ddns/data/model"
-	"github.com/inimei/ddns/errs"
+	"github.com/yangsongfwd/backup/log"
+	"github.com/yangsongfwd/ddns/config"
+	"github.com/yangsongfwd/ddns/data"
+	"github.com/yangsongfwd/ddns/data/model"
+	"github.com/yangsongfwd/ddns/errs"
 
 	"github.com/jinzhu/gorm"
 	_ "github.com/jinzhu/gorm/dialects/sqlite"

@@ -3,9 +3,9 @@ package sqlite
 import (
 	"strings"
 
-	"github.com/inimei/backup/log"
-	m "github.com/inimei/ddns/data/model"
-	"github.com/inimei/ddns/errs"
+	"github.com/yangsongfwd/backup/log"
+	m "github.com/yangsongfwd/ddns/data/model"
+	"github.com/yangsongfwd/ddns/errs"
 )
 
 func (s *SqliteDB) NewDomain(userID int64, d *m.Domain) (int64, error) {

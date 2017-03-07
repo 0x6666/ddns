@@ -6,14 +6,14 @@ import (
 	"runtime/pprof"
 	"time"
 
-	"github.com/inimei/backup/log"
-	"github.com/inimei/ddns/config"
-	"github.com/inimei/ddns/data"
-	"github.com/inimei/ddns/data/sqlite"
-	"github.com/inimei/ddns/ddns"
-	"github.com/inimei/ddns/ddns/slave"
-	"github.com/inimei/ddns/download"
-	"github.com/inimei/ddns/web"
+	"github.com/yangsongfwd/backup/log"
+	"github.com/yangsongfwd/ddns/config"
+	"github.com/yangsongfwd/ddns/data"
+	"github.com/yangsongfwd/ddns/data/sqlite"
+	"github.com/yangsongfwd/ddns/ddns"
+	"github.com/yangsongfwd/ddns/ddns/slave"
+	"github.com/yangsongfwd/ddns/download"
+	"github.com/yangsongfwd/ddns/web"
 )
 
 func main() {

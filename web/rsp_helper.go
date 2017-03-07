@@ -12,9 +12,9 @@ import (
 	"net"
 
 	"github.com/gin-gonic/gin"
-	"github.com/inimei/backup/log"
-	"github.com/inimei/ddns/data/model"
-	"github.com/inimei/ddns/errs"
+	"github.com/yangsongfwd/backup/log"
+	"github.com/yangsongfwd/ddns/data/model"
+	"github.com/yangsongfwd/ddns/errs"
 )
 
 type JsonMap map[string]interface{}

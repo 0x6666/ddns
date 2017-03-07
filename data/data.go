@@ -1,6 +1,6 @@
 package data
 
-import "github.com/inimei/ddns/data/model"
+import "github.com/yangsongfwd/ddns/data/model"
 
 type OnDomainChanged func()
 

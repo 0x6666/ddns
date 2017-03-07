@@ -6,8 +6,8 @@ import (
 	"strconv"
 
 	"github.com/gin-gonic/gin"
-	"github.com/inimei/backup/log"
-	"github.com/inimei/ddns/data/model"
+	"github.com/yangsongfwd/backup/log"
+	"github.com/yangsongfwd/ddns/data/model"
 )
 
 // apiGetDataSchemaVersion -> [POST] :/api/dataversion

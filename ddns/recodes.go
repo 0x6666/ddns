@@ -5,10 +5,10 @@ import (
 
 	"strings"
 
-	"github.com/inimei/backup/log"
-	"github.com/inimei/ddns/data"
-	"github.com/inimei/ddns/data/model"
 	"github.com/miekg/dns"
+	"github.com/yangsongfwd/backup/log"
+	"github.com/yangsongfwd/ddns/data"
+	"github.com/yangsongfwd/ddns/data/model"
 )
 
 func toDnsType(t model.RecodeType) uint16 {

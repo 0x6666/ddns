@@ -4,7 +4,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/inimei/ddns/errs"
+	"github.com/yangsongfwd/ddns/errs"
 )
 
 type value struct {

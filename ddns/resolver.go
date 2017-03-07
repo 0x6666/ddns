@@ -6,9 +6,9 @@ import (
 	"sync"
 	"time"
 
-	"github.com/inimei/backup/log"
-	"github.com/inimei/ddns/config"
 	"github.com/miekg/dns"
+	"github.com/yangsongfwd/backup/log"
+	"github.com/yangsongfwd/ddns/config"
 )
 
 //ResolvError ...

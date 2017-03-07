@@ -4,9 +4,9 @@ import (
 	"fmt"
 
 	"github.com/gin-gonic/gin"
-	"github.com/inimei/ddns/config"
-	"github.com/inimei/ddns/data"
-	"github.com/inimei/ddns/download"
+	"github.com/yangsongfwd/ddns/config"
+	"github.com/yangsongfwd/ddns/data"
+	"github.com/yangsongfwd/ddns/download"
 )
 
 type WebServer struct {

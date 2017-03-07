@@ -4,9 +4,9 @@ import (
 	"strconv"
 	"time"
 
-	"github.com/inimei/backup/log"
-	"github.com/inimei/ddns/data"
 	"github.com/miekg/dns"
+	"github.com/yangsongfwd/backup/log"
+	"github.com/yangsongfwd/ddns/data"
 )
 
 type Server struct {

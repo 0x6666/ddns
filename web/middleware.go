@@ -6,9 +6,9 @@ import (
 	"strings"
 
 	"github.com/gin-gonic/gin"
-	"github.com/inimei/backup/log"
-	"github.com/inimei/ddns/web/sessions"
-	"github.com/inimei/ddns/web/signature"
+	"github.com/yangsongfwd/backup/log"
+	"github.com/yangsongfwd/ddns/web/sessions"
+	"github.com/yangsongfwd/ddns/web/signature"
 )
 
 const (
