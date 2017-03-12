@@ -4,19 +4,22 @@ if [ -a "$GOPATH/bin/ddns" ]; then
 	rm "$GOPATH/bin/ddns"
 fi
 
-go install github.com/inimei/ddns/cmd/ddns
+go install github.com/yangsongfwd/ddns/cmd/ddns
 
 cfg=$GOPATH/bin/ddns.toml
-if [ ! -f $cfg ]; then
-	ln -s $GOPATH/src/github.com/inimei/ddns/ddns.toml $cfg
+if [ -a $cfg ]; then
+	rm $cfg
 fi
+ln -s $GOPATH/src/github.com/yangsongfwd/ddns/ddns.toml $cfg
 
 static=$GOPATH/bin/ddns_static
-if [ ! -d $static ]; then
-	ln -s $GOPATH/src/github.com/inimei/ddns/ddns_static $static
+if [ -a $static ]; then
+	rm $static
 fi
+ln -s $GOPATH/src/github.com/yangsongfwd/ddns/ddns_static $static
 
 cfg=$GOPATH/bin/resolv.conf
-if [ ! -f $cfg ]; then
-	ln -s $GOPATH/src/github.com/inimei/ddns/resolv.conf $cfg
+if [ -a $cfg ]; then
+	rm $cfg
 fi
+ln -s $GOPATH/src/github.com/yangsongfwd/ddns/resolv.conf $cfg

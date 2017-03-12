@@ -7,8 +7,8 @@ import (
 	"strings"
 
 	"github.com/gin-gonic/gin"
-	"github.com/inimei/backup/log"
-	"github.com/inimei/ddns/config"
+	"github.com/yangsongfwd/backup/log"
+	"github.com/yangsongfwd/ddns/config"
 )
 
 // getDownloads -> [GET] :/downloads?r=true&offset=10&limit=0
