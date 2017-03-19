@@ -1,4 +1,4 @@
-package web
+package controllers
 
 import (
 	"net/http"
@@ -6,12 +6,26 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/gin-gonic/gin"
 	"github.com/yangsongfwd/backup/log"
 	"github.com/yangsongfwd/ddns/config"
+	"github.com/yangsongfwd/ddns/download"
+	"github.com/yangsongfwd/ddns/server"
 )
 
-// getDownloads -> [GET] :/downloads?r=true&offset=10&limit=0
+type Downloader struct {
+	ContrllerBase
+}
+
+func (d Downloader) d() *download.DownloadMgr {
+	idload := server.Server.GetGlobalData("downloadMgr")
+	if idload == nil {
+		log.Error("get downloadMgr error")
+		return nil
+	}
+	return idload.(*download.DownloadMgr)
+}
+
+// GetDownloads -> [GET] :/downloads?r=true&offset=10&limit=0
 //
 // Ret Code:[200]
 //
@@ -35,15 +49,15 @@ import (
 // 失败返回值
 //		code: xxx
 //
-func (h *handler) getDownloads(c *gin.Context) {
-	if t := requestType(c.Request); t != MIMEJSON {
-		parameters := h.getTemplateParameter(c)
+func (d Downloader) GetDownloads() {
+	if !d.IsJsonReqest() {
+		parameters := d.getTemplateParameter()
 		parameters["BreadcrumbSecs"] = SectionItems{
-			&SectionItem{"Download", pDownloads},
+			&SectionItem{"Download", PDownloads},
 		}
 
 		parameters["View"] = "downloads_view"
-		h.HTML(c, http.StatusOK, parameters)
+		d.HTML(http.StatusOK, parameters)
 		return
 	}
 
@@ -51,7 +65,7 @@ func (h *handler) getDownloads(c *gin.Context) {
 
 	//userid, _ := sessions.GetUserID(c.Request)
 	tasksArray := []JsonMap{}
-	tasks := h.ws.d.Tasks()
+	tasks := d.d().Tasks()
 	if len(tasks) != 0 {
 		for _, t := range tasks {
 			files[t.Dest] = true
@@ -59,7 +73,7 @@ func (h *handler) getDownloads(c *gin.Context) {
 				"id":             t.Id,
 				"name":           filepath.Base(t.Dest),
 				"src":            t.Src,
-				"dest":           strings.Replace(t.Dest, config.Data.Download.Dest, pFiles, 1),
+				"dest":           strings.Replace(t.Dest, config.Data.Download.Dest, PFiles, 1),
 				"size":           t.Size,
 				"transferred":    t.BytesTransferred,
 				"bytesPerSecond": t.AverageBytesPerSecond,
@@ -83,7 +97,7 @@ func (h *handler) getDownloads(c *gin.Context) {
 				"id":             0,
 				"name":           filepath.Base(path),
 				"src":            "",
-				"dest":           strings.Replace(path, config.Data.Download.Dest, pFiles, 1),
+				"dest":           strings.Replace(path, config.Data.Download.Dest, PFiles, 1),
 				"size":           f.Size(),
 				"transferred":    f.Size(),
 				"bytesPerSecond": 0,
@@ -91,10 +105,10 @@ func (h *handler) getDownloads(c *gin.Context) {
 			return nil
 		})
 
-	c.JSON(http.StatusOK, JsonMap{"code": CodeOK, "tasks": tasksArray})
+	d.JSON(http.StatusOK, JsonMap{"code": CodeOK, "tasks": tasksArray})
 }
 
-// startDownloads -> [POST] :/downloads?r=true&offset=10&limit=0
+// StartDownloads -> [POST] :/downloads?r=true&offset=10&limit=0
 //
 // Ret Code:[200]
 //
@@ -109,22 +123,22 @@ func (h *handler) getDownloads(c *gin.Context) {
 // 失败返回值
 //		code: xxx
 //
-func (h *handler) startDownloads(c *gin.Context) {
+func (d Downloader) StartDownloads() {
 
 	//userid, _ := sessions.GetUserID(c.Request)
-	url := strings.ToLower(c.PostForm("url"))
+	url := strings.ToLower(d.C.PostForm("url"))
 	if url == "" {
 		log.Error("url is empty")
-		c.JSON(http.StatusOK, JsonMap{"code": CodeInvalidURL, "msg": "url is empty"})
+		d.JSON(http.StatusOK, JsonMap{"code": CodeInvalidURL, "msg": "url is empty"})
 		return
 	}
 
-	id, err := h.ws.d.Download(url)
+	id, err := d.d().Download(url)
 	if err != nil {
 		log.Error(err.Error())
-		c.JSON(http.StatusOK, JsonMap{"code": CodeUnknowError, "msg": err.Error()})
+		d.JSON(http.StatusOK, JsonMap{"code": CodeUnknowError, "msg": err.Error()})
 		return
 	}
 
-	c.JSON(http.StatusOK, JsonMap{"code": CodeOK, "id": id})
+	d.JSON(http.StatusOK, JsonMap{"code": CodeOK, "id": id})
 }

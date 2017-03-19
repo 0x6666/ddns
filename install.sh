@@ -1,25 +1,26 @@
 # !/bin/bash
 
+project=ddns.d
+
 if [ -a "$GOPATH/bin/ddns" ]; then
 	rm "$GOPATH/bin/ddns"
 fi
 
 go install github.com/yangsongfwd/ddns/cmd/ddns
 
-cfg=$GOPATH/bin/ddns.toml
-if [ -a $cfg ]; then
-	rm $cfg
+cfgdir=$GOPATH/bin/$project
+if [ -a $cfgdir ]; then
+	rm -fr $cfgdir
 fi
-ln -s $GOPATH/src/github.com/yangsongfwd/ddns/ddns.toml $cfg
+mkdir -p $cfgdir
+
+ln -s $GOPATH/src/github.com/yangsongfwd/ddns/conf/ddns.toml $cfgdir/ddns.toml
+ln -s $GOPATH/src/github.com/yangsongfwd/ddns/conf/routes $cfgdir/routes
+ln -s $GOPATH/src/github.com/yangsongfwd/ddns/conf/resolv.conf $cfgdir/resolv.conf
+ln -s $GOPATH/src/github.com/yangsongfwd/ddns/conf/hosts $cfgdir/hosts
 
 static=$GOPATH/bin/ddns_static
 if [ -a $static ]; then
 	rm $static
 fi
 ln -s $GOPATH/src/github.com/yangsongfwd/ddns/ddns_static $static
-
-cfg=$GOPATH/bin/resolv.conf
-if [ -a $cfg ]; then
-	rm $cfg
-fi
-ln -s $GOPATH/src/github.com/yangsongfwd/ddns/resolv.conf $cfg

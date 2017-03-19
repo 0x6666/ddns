@@ -7,8 +7,7 @@ import (
 
 	"github.com/miekg/dns"
 	"github.com/yangsongfwd/backup/log"
-	"github.com/yangsongfwd/ddns/data"
-	"github.com/yangsongfwd/ddns/data/model"
+	"github.com/yangsongfwd/ddns/app/model"
 )
 
 func toDnsType(t model.RecodeType) uint16 {
@@ -105,7 +104,7 @@ func (d domainCache) getReverseValue(addr string) []recode {
 }
 
 type DBRecodes struct {
-	db data.IDatabase
+	db model.IDatabase
 
 	sync.RWMutex
 
@@ -113,7 +112,7 @@ type DBRecodes struct {
 	cacheVersion int64
 }
 
-func NewDBRecodes(db data.IDatabase) *DBRecodes {
+func NewDBRecodes(db model.IDatabase) *DBRecodes {
 	dr := &DBRecodes{db: db}
 	dr.dcache = &domainCache{}
 	dr.cacheVersion = -1

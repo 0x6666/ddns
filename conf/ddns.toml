@@ -38,16 +38,16 @@ passwd = ""
 
 [resolv]
 enable = true
-resolv-file="resolv.conf"
+resolv-file="ddns.d/resolv.conf"
 timeout = 5  # 5 seconds
 interval = 200 # 200 milliseconds
 
 [hosts]
 #If set false, will not query hosts file and redis hosts record
 enable = false
-host-file = "/etc/hosts"
+host-file = "ddns.d//hosts"
 ttl = 600
 
 [download]
 enable = true
-dest = "/home/inimei/download"
+dest = "/home/yangsongfwd/download"

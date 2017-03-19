@@ -6,9 +6,9 @@ import (
 	"github.com/boj/redistore"
 	"github.com/gorilla/sessions"
 	"github.com/yangsongfwd/backup/log"
+	"github.com/yangsongfwd/ddns/app/sessions/memstore"
 	"github.com/yangsongfwd/ddns/config"
 	"github.com/yangsongfwd/ddns/errs"
-	"github.com/yangsongfwd/ddns/web/sessions/memstore"
 )
 
 var store sessions.Store

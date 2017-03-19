@@ -4,7 +4,7 @@ import (
 	"strings"
 
 	"github.com/yangsongfwd/backup/log"
-	m "github.com/yangsongfwd/ddns/data/model"
+	m "github.com/yangsongfwd/ddns/app/model"
 	"github.com/yangsongfwd/ddns/errs"
 )
 

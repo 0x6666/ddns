@@ -14,16 +14,15 @@ import (
 	"sync"
 
 	"github.com/yangsongfwd/backup/log"
+	"github.com/yangsongfwd/ddns/app/controllers"
+	"github.com/yangsongfwd/ddns/app/model"
+	"github.com/yangsongfwd/ddns/app/signature"
 	"github.com/yangsongfwd/ddns/config"
-	"github.com/yangsongfwd/ddns/data"
-	"github.com/yangsongfwd/ddns/data/model"
 	"github.com/yangsongfwd/ddns/errs"
-	"github.com/yangsongfwd/ddns/web"
-	"github.com/yangsongfwd/ddns/web/signature"
 )
 
 type SlaveServer struct {
-	db data.IDatabase
+	db model.IDatabase
 
 	sync.RWMutex
 	updating bool
@@ -41,7 +40,7 @@ type recode struct {
 	userid  int64
 }
 
-func (ss *SlaveServer) Init(db data.IDatabase) error {
+func (ss *SlaveServer) Init(db model.IDatabase) error {
 
 	if db == nil {
 		log.Error(errs.ErrInvalidParam.Error())
@@ -224,7 +223,7 @@ func (ss *SlaveServer) getRecodes() ([]recode, error) {
 		return nil, err
 	}
 
-	if data.Code != web.CodeOK {
+	if data.Code != controllers.CodeOK {
 		err = fmt.Errorf("get recodes failed: %v, msg: %v", data.Code, data.Msg)
 		log.Error(err.Error())
 		return nil, err
@@ -281,7 +280,7 @@ func (ss *SlaveServer) getVersion() (*model.Version, error) {
 		return nil, err
 	}
 
-	if version.Code != web.CodeOK {
+	if version.Code != controllers.CodeOK {
 		err = fmt.Errorf("get version failed: %v, msg: %v", version.Code, version.Msg)
 		log.Error(err.Error())
 		return nil, err

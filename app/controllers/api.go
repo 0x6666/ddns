@@ -1,16 +1,19 @@
-package web
+package controllers
 
 import (
 	"net"
 	"net/http"
 	"strconv"
 
-	"github.com/gin-gonic/gin"
 	"github.com/yangsongfwd/backup/log"
-	"github.com/yangsongfwd/ddns/data/model"
+	"github.com/yangsongfwd/ddns/app/model"
 )
 
-// apiGetDataSchemaVersion -> [POST] :/api/dataversion
+type ApiCtrl struct {
+	ContrllerBase
+}
+
+// ApiGetDataSchemaVersion -> [POST] :/api/dataversion
 //
 // Ret Code:[200]
 //
@@ -23,21 +26,20 @@ import (
 // 失败返回值
 //	code: xxx
 //
-func (h *handler) apiGetDataSchemaVersion(c *gin.Context) {
+func (a ApiCtrl) ApiGetDataSchemaVersion() {
 
-	res := map[string]interface{}{}
+	res := JsonMap{}
 	res["code"] = CodeOK
 
 	v := model.Version{}
 	v.SchemaVersion = model.CurrentVersion
-	v.DataVersion = h.ws.db.GetVersion()
+	v.DataVersion = a.db().GetVersion()
 
 	res["version"] = v
-
-	c.JSON(http.StatusOK, res)
+	a.JSON(http.StatusOK, res)
 }
 
-// apiGetRecodes -> [POST] :/api/recodes
+// ApiGetRecodes -> [POST] :/api/recodes
 //
 // Ret Code:[200]
 //
@@ -65,35 +67,35 @@ func (h *handler) apiGetDataSchemaVersion(c *gin.Context) {
 // 失败返回值
 //		code: xxx
 //
-func (h *handler) apiGetRecodes(c *gin.Context) {
+func (a ApiCtrl) ApiGetRecodes() {
 
-	l := c.DefaultQuery("limit", "10")
-	o := c.DefaultQuery("offset", "0")
+	l := a.C.DefaultQuery("limit", "10")
+	o := a.C.DefaultQuery("offset", "0")
 
 	limit, _ := strconv.ParseInt(l, 10, 64)
 	offset, _ := strconv.ParseInt(o, 10, 64)
 
-	domains, err := h.ws.db.GetAllDomains(int(offset), int(limit))
+	domains, err := a.db().GetAllDomains(int(offset), int(limit))
 	if err != nil {
 		log.Error(err.Error())
-		h.rspError(c, err)
+		a.rspError(err)
 		return
 	}
 
-	domainsJson := []map[string]interface{}{}
+	domainsJson := []JsonMap{}
 	for _, d := range domains {
-		dJson := map[string]interface{}{}
+		dJson := JsonMap{}
 		dJson["id"] = d.ID
 		dJson["domain"] = d.DomainName
 		dJson["userid"] = d.UserID
 
-		recodes, err := h.ws.db.GetRecodes(d.ID, 0, -1)
+		recodes, err := a.db().GetRecodes(d.ID, 0, -1)
 		if err != nil {
 			log.Error(err.Error())
 		} else {
-			recodesJson := []map[string]interface{}{}
+			recodesJson := []JsonMap{}
 			for _, r := range recodes {
-				rJson := map[string]interface{}{}
+				rJson := JsonMap{}
 				rJson["id"] = r.ID
 				rJson["value"] = r.RecodeValue
 				rJson["type"] = r.RecordType
@@ -112,14 +114,14 @@ func (h *handler) apiGetRecodes(c *gin.Context) {
 		domainsJson = append(domainsJson, dJson)
 	}
 
-	res := map[string]interface{}{}
+	res := JsonMap{}
 	res["code"] = CodeOK
 	res["domains"] = domainsJson
 
-	c.JSON(http.StatusOK, res)
+	a.JSON(http.StatusOK, res)
 }
 
-// apiUpdateRecode -> [POST] :/api/update
+// ApiUpdateRecode -> [POST] :/api/update
 //
 // Ret Code:[200]
 //
@@ -135,42 +137,42 @@ func (h *handler) apiGetRecodes(c *gin.Context) {
 //		"result": "xxx"
 //	}
 //
-func (h *handler) apiUpdateRecode(c *gin.Context) {
+func (a ApiCtrl) ApiUpdateRecode() {
 
-	key := c.PostForm("key")
+	key := a.C.PostForm("key")
 	if len(key) == 0 {
-		h.rspErrorCode(c, CodeKeyIsEmpty, "key is empty")
+		a.rspErrorCode(CodeKeyIsEmpty, "key is empty")
 		return
 	}
 
-	ip := c.PostForm("ip")
+	ip := a.C.PostForm("ip")
 	if len(ip) != 0 {
 		if i := net.ParseIP(ip); i == nil {
-			h.rspErrorCode(c, CodeInvalidIP, "invalid ip address")
+			a.rspErrorCode(CodeInvalidIP, "invalid ip address")
 			return
 		}
 	}
 
-	recode, err := h.ws.db.FindByKey(key)
+	recode, err := a.db().FindByKey(key)
 	if err != nil {
 		log.Error(err.Error())
-		h.rspError(c, err)
+		a.rspError(err)
 		return
 	}
 
 	if recode.RecodeValue == ip {
-		h.rspOk(c)
+		a.rspOk()
 		return
 	}
 
 	recode.RecodeValue = ip
 
-	err = h.ws.db.UpdateRecode(recode.ID, recode)
+	err = a.db().UpdateRecode(recode.ID, recode)
 	if err != nil {
 		log.Error(err.Error())
-		h.rspError(c, err)
+		a.rspError(err)
 		return
 	}
 
-	h.rspOk(c)
+	a.rspOk()
 }

@@ -6,9 +6,8 @@ import (
 	"sync"
 
 	"github.com/yangsongfwd/backup/log"
+	"github.com/yangsongfwd/ddns/app/model"
 	"github.com/yangsongfwd/ddns/config"
-	"github.com/yangsongfwd/ddns/data"
-	"github.com/yangsongfwd/ddns/data/model"
 	"github.com/yangsongfwd/ddns/errs"
 
 	"github.com/jinzhu/gorm"
@@ -21,7 +20,7 @@ type SqliteDB struct {
 
 	version  int64
 	mutex    sync.RWMutex
-	listener map[string]data.OnDomainChanged
+	listener map[string]model.OnDomainChanged
 }
 
 func NewSqlite() *SqliteDB {
@@ -143,7 +142,7 @@ func (s *SqliteDB) SetVersion(v int64) {
 	}
 }
 
-func (s *SqliteDB) BeginTransaction() (data.IDatabase, error) {
+func (s *SqliteDB) BeginTransaction() (model.IDatabase, error) {
 	d := s.db.Begin()
 	if d.Error != nil {
 		return nil, d.Error
@@ -167,7 +166,7 @@ func (s *SqliteDB) Commit() error {
 }
 
 //RegListener ...
-func (s *SqliteDB) RegListener(l data.OnDomainChanged) {
+func (s *SqliteDB) RegListener(l model.OnDomainChanged) {
 	s.mutex.Lock()
 	defer s.mutex.Unlock()
 
@@ -177,7 +176,7 @@ func (s *SqliteDB) RegListener(l data.OnDomainChanged) {
 	}
 
 	if s.listener == nil {
-		s.listener = map[string]data.OnDomainChanged{}
+		s.listener = map[string]model.OnDomainChanged{}
 	}
 
 	funcName := runtime.FuncForPC(reflect.ValueOf(l).Pointer()).Name()
@@ -193,7 +192,7 @@ func (s *SqliteDB) RegListener(l data.OnDomainChanged) {
 }
 
 //UnRegListener ...
-func (s *SqliteDB) UnRegListener(l data.OnDomainChanged) {
+func (s *SqliteDB) UnRegListener(l model.OnDomainChanged) {
 	s.mutex.Lock()
 	defer s.mutex.Unlock()
 

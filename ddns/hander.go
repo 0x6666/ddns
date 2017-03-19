@@ -10,8 +10,8 @@ import (
 
 	"github.com/miekg/dns"
 	"github.com/yangsongfwd/backup/log"
+	"github.com/yangsongfwd/ddns/app/model"
 	"github.com/yangsongfwd/ddns/config"
-	"github.com/yangsongfwd/ddns/data"
 	"github.com/yangsongfwd/ddns/errs"
 )
 
@@ -60,7 +60,7 @@ type DDNSHandler struct {
 	dbrecodes       *DBRecodes
 }
 
-func NewHandler(db data.IDatabase) *DDNSHandler {
+func NewHandler(db model.IDatabase) *DDNSHandler {
 
 	var (
 		cacheConfig     config.CacheSettings

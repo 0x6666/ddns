@@ -7,20 +7,20 @@ import (
 	"time"
 
 	"github.com/yangsongfwd/backup/log"
+	"github.com/yangsongfwd/ddns/app"
+	"github.com/yangsongfwd/ddns/app/model"
+	"github.com/yangsongfwd/ddns/app/model/sqlite"
 	"github.com/yangsongfwd/ddns/config"
-	"github.com/yangsongfwd/ddns/data"
-	"github.com/yangsongfwd/ddns/data/sqlite"
 	"github.com/yangsongfwd/ddns/ddns"
 	"github.com/yangsongfwd/ddns/ddns/slave"
 	"github.com/yangsongfwd/ddns/download"
 	"github.com/yangsongfwd/ddns/server"
-	"github.com/yangsongfwd/ddns/web"
 )
 
 func regBeforStart() {
 	//reg db
 	server.Server.RegBeforStart(func() {
-		var db data.IDatabase
+		var db model.IDatabase
 		db = sqlite.NewSqlite()
 		if err := db.Init(); err != nil {
 			log.Error(err.Error())
@@ -39,7 +39,7 @@ func regBeforStart() {
 				return
 			}
 
-			db := idb.(data.IDatabase)
+			db := idb.(model.IDatabase)
 			var ds *ddns.Server
 			ds = &ddns.Server{
 				Host:     config.Data.Server.Addr,
@@ -76,7 +76,7 @@ func regBeforStart() {
 	}
 
 	//reg web server
-	if config.Data.Server.EnableWeb {
+	/*if config.Data.Server.EnableWeb {
 		server.Server.RegBeforStart(func() {
 			if config.Data.Web.Admin == "" || config.Data.Web.Passwd == "" {
 				log.Error("web admin & passwd can't be empty")
@@ -88,7 +88,7 @@ func regBeforStart() {
 				log.Error("get db error")
 				return
 			}
-			db := idb.(data.IDatabase)
+			db := idb.(model.IDatabase)
 
 			idload := server.Server.GetGlobalData("downloadMgr")
 			if idload == nil {
@@ -97,19 +97,19 @@ func regBeforStart() {
 			}
 			dload := idload.(*download.DownloadMgr)
 
-			ws := &web.WebServer{}
+			ws := &app.WebServer{}
 			ws.Start(db, dload)
 			server.Server.AddGlobalData("ws", ws)
 			server.Server.RegBeforStop(ws.Stop)
 		})
-	}
+	}*/
 }
 
 func main() {
 
 	regBeforStart()
 
-	server.Server.Run()
+	server.Server.Run(app.RegRoute)
 
 	if config.Data.Server.Debug {
 		go profileCPU()

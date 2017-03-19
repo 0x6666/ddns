@@ -6,7 +6,7 @@ import (
 
 	"github.com/miekg/dns"
 	"github.com/yangsongfwd/backup/log"
-	"github.com/yangsongfwd/ddns/data"
+	"github.com/yangsongfwd/ddns/app/model"
 )
 
 type Server struct {
@@ -15,7 +15,7 @@ type Server struct {
 	RTimeout time.Duration
 	WTimeout time.Duration
 
-	Db data.IDatabase
+	Db model.IDatabase
 
 	h *DDNSHandler
 }

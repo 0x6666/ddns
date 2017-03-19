@@ -160,7 +160,7 @@ func CurDir() string {
 func init() {
 	dir := CurDir()
 
-	err := initialize(dir + "/ddns.toml")
+	err := initialize(dir + "/ddns.d/ddns.toml")
 	if err != nil {
 		fmt.Println(err.Error())
 		return
