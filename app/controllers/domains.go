@@ -10,7 +10,7 @@ import (
 	"strings"
 
 	"github.com/google/uuid"
-	"github.com/gpmgo/gopm/modules/log"
+	"github.com/yangsongfwd/backup/log"
 	"github.com/yangsongfwd/ddns/app/model"
 	"github.com/yangsongfwd/ddns/app/sessions"
 	"github.com/yangsongfwd/ddns/errs"
