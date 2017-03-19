@@ -6,7 +6,7 @@ import (
 	"strings"
 
 	"github.com/gin-gonic/gin"
-	"github.com/gpmgo/gopm/modules/log"
+	"github.com/yangsongfwd/backup/log"
 	"github.com/yangsongfwd/ddns/app/model"
 	"github.com/yangsongfwd/ddns/config"
 	"github.com/yangsongfwd/ddns/server"
