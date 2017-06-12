@@ -4,8 +4,8 @@ import (
 	"fmt"
 
 	"github.com/gin-gonic/gin"
-	"github.com/yangsongfwd/backup/log"
-	"github.com/yangsongfwd/ddns/config"
+	"github.com/0x6666/backup/log"
+	"github.com/0x6666/ddns/config"
 )
 
 var Server *_Server

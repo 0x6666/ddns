@@ -1,9 +1,9 @@
 package app
 
 import (
-	"github.com/yangsongfwd/ddns/app/controllers"
-	"github.com/yangsongfwd/ddns/config"
-	"github.com/yangsongfwd/ddns/server"
+	"github.com/0x6666/ddns/app/controllers"
+	"github.com/0x6666/ddns/config"
+	"github.com/0x6666/ddns/server"
 )
 
 func RegRoute(r server.IRouter) {

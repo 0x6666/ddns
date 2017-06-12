@@ -4,10 +4,10 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/yangsongfwd/backup/log"
-	"github.com/yangsongfwd/ddns/config"
-	"github.com/yangsongfwd/ddns/errs"
-	"github.com/yangsongfwd/grab"
+	"github.com/0x6666/backup/log"
+	"github.com/0x6666/ddns/config"
+	"github.com/0x6666/ddns/errs"
+	"github.com/0x6666/grab"
 )
 
 type DownloadClent struct {

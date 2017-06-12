@@ -8,7 +8,7 @@ import (
 	"strings"
 
 	"github.com/BurntSushi/toml"
-	"github.com/yangsongfwd/backup/log"
+	"github.com/0x6666/backup/log"
 )
 
 type CacheSettings struct {

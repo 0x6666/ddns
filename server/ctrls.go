@@ -5,7 +5,7 @@ import (
 	"reflect"
 
 	"github.com/gin-gonic/gin"
-	"github.com/yangsongfwd/backup/log"
+	"github.com/0x6666/backup/log"
 )
 
 var controllerPtrType = reflect.TypeOf(&CtrlBase{})

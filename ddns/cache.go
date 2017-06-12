@@ -8,10 +8,10 @@ import (
 	"time"
 
 	"github.com/miekg/dns"
-	"github.com/yangsongfwd/backup/log"
-	"github.com/yangsongfwd/ddns/config"
-	"github.com/yangsongfwd/ddns/ddns/container"
-	"github.com/yangsongfwd/ddns/errs"
+	"github.com/0x6666/backup/log"
+	"github.com/0x6666/ddns/config"
+	"github.com/0x6666/ddns/ddns/container"
+	"github.com/0x6666/ddns/errs"
 )
 
 const (

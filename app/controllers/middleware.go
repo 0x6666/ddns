@@ -5,9 +5,9 @@ import (
 	"net/url"
 	"strings"
 
-	"github.com/yangsongfwd/backup/log"
-	"github.com/yangsongfwd/ddns/app/sessions"
-	"github.com/yangsongfwd/ddns/app/signature"
+	"github.com/0x6666/backup/log"
+	"github.com/0x6666/ddns/app/sessions"
+	"github.com/0x6666/ddns/app/signature"
 )
 
 const (

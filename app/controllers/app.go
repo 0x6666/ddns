@@ -6,10 +6,10 @@ import (
 
 	"fmt"
 
-	"github.com/yangsongfwd/backup/log"
-	"github.com/yangsongfwd/ddns/app/model"
-	"github.com/yangsongfwd/ddns/app/sessions"
-	"github.com/yangsongfwd/ddns/config"
+	"github.com/0x6666/backup/log"
+	"github.com/0x6666/ddns/app/model"
+	"github.com/0x6666/ddns/app/sessions"
+	"github.com/0x6666/ddns/config"
 )
 
 const (

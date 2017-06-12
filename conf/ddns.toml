@@ -50,4 +50,4 @@ ttl = 600
 
 [download]
 enable = true
-dest = "/home/yangsongfwd/download"
+dest = "/home/0x6666/download"

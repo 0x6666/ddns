@@ -8,7 +8,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/gin-gonic/gin/render"
-	"github.com/yangsongfwd/backup/log"
+	"github.com/0x6666/backup/log"
 )
 
 //实现HTMLRender，主要用于调试时，可以实现动态加载有可以导入funcmap

@@ -13,12 +13,12 @@ import (
 
 	"sync"
 
-	"github.com/yangsongfwd/backup/log"
-	"github.com/yangsongfwd/ddns/app/controllers"
-	"github.com/yangsongfwd/ddns/app/model"
-	"github.com/yangsongfwd/ddns/app/signature"
-	"github.com/yangsongfwd/ddns/config"
-	"github.com/yangsongfwd/ddns/errs"
+	"github.com/0x6666/backup/log"
+	"github.com/0x6666/ddns/app/controllers"
+	"github.com/0x6666/ddns/app/model"
+	"github.com/0x6666/ddns/app/signature"
+	"github.com/0x6666/ddns/config"
+	"github.com/0x6666/ddns/errs"
 )
 
 type SlaveServer struct {

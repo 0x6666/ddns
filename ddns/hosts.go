@@ -11,8 +11,8 @@ import (
 	"github.com/fsnotify/fsnotify"
 	"github.com/miekg/dns"
 
-	"github.com/yangsongfwd/backup/log"
-	"github.com/yangsongfwd/ddns/config"
+	"github.com/0x6666/backup/log"
+	"github.com/0x6666/ddns/config"
 )
 
 type Hosts struct {

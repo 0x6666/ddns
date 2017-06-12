@@ -5,10 +5,10 @@ import (
 
 	"github.com/boj/redistore"
 	"github.com/gorilla/sessions"
-	"github.com/yangsongfwd/backup/log"
-	"github.com/yangsongfwd/ddns/app/sessions/memstore"
-	"github.com/yangsongfwd/ddns/config"
-	"github.com/yangsongfwd/ddns/errs"
+	"github.com/0x6666/backup/log"
+	"github.com/0x6666/ddns/app/sessions/memstore"
+	"github.com/0x6666/ddns/config"
+	"github.com/0x6666/ddns/errs"
 )
 
 var store sessions.Store

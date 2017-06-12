@@ -6,8 +6,8 @@ import (
 	"strings"
 
 	"github.com/miekg/dns"
-	"github.com/yangsongfwd/backup/log"
-	"github.com/yangsongfwd/ddns/app/model"
+	"github.com/0x6666/backup/log"
+	"github.com/0x6666/ddns/app/model"
 )
 
 func toDnsType(t model.RecodeType) uint16 {

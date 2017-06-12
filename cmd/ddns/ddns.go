@@ -6,15 +6,15 @@ import (
 	"runtime/pprof"
 	"time"
 
-	"github.com/yangsongfwd/backup/log"
-	"github.com/yangsongfwd/ddns/app"
-	"github.com/yangsongfwd/ddns/app/model"
-	"github.com/yangsongfwd/ddns/app/model/sqlite"
-	"github.com/yangsongfwd/ddns/config"
-	"github.com/yangsongfwd/ddns/ddns"
-	"github.com/yangsongfwd/ddns/ddns/slave"
-	"github.com/yangsongfwd/ddns/download"
-	"github.com/yangsongfwd/ddns/server"
+	"github.com/0x6666/backup/log"
+	"github.com/0x6666/ddns/app"
+	"github.com/0x6666/ddns/app/model"
+	"github.com/0x6666/ddns/app/model/sqlite"
+	"github.com/0x6666/ddns/config"
+	"github.com/0x6666/ddns/ddns"
+	"github.com/0x6666/ddns/ddns/slave"
+	"github.com/0x6666/ddns/download"
+	"github.com/0x6666/ddns/server"
 )
 
 func regBeforStart() {

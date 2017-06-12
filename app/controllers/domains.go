@@ -10,10 +10,10 @@ import (
 	"strings"
 
 	"github.com/google/uuid"
-	"github.com/yangsongfwd/backup/log"
-	"github.com/yangsongfwd/ddns/app/model"
-	"github.com/yangsongfwd/ddns/app/sessions"
-	"github.com/yangsongfwd/ddns/errs"
+	"github.com/0x6666/backup/log"
+	"github.com/0x6666/ddns/app/model"
+	"github.com/0x6666/ddns/app/sessions"
+	"github.com/0x6666/ddns/errs"
 )
 
 type DomainsCtrl struct {

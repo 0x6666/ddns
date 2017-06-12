@@ -6,10 +6,10 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/yangsongfwd/backup/log"
-	"github.com/yangsongfwd/ddns/config"
-	"github.com/yangsongfwd/ddns/download"
-	"github.com/yangsongfwd/ddns/server"
+	"github.com/0x6666/backup/log"
+	"github.com/0x6666/ddns/config"
+	"github.com/0x6666/ddns/download"
+	"github.com/0x6666/ddns/server"
 )
 
 type Downloader struct {

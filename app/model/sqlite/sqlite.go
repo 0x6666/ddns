@@ -5,10 +5,10 @@ import (
 	"runtime"
 	"sync"
 
-	"github.com/yangsongfwd/backup/log"
-	"github.com/yangsongfwd/ddns/app/model"
-	"github.com/yangsongfwd/ddns/config"
-	"github.com/yangsongfwd/ddns/errs"
+	"github.com/0x6666/backup/log"
+	"github.com/0x6666/ddns/app/model"
+	"github.com/0x6666/ddns/config"
+	"github.com/0x6666/ddns/errs"
 
 	"github.com/jinzhu/gorm"
 	_ "github.com/jinzhu/gorm/dialects/sqlite"
