@@ -18,6 +18,7 @@ func RegRoute(r server.IRouter) {
 		g := r.Group("", controllers.Downloader.CookieAuthMiddleware)
 		g.Get(controllers.PDownloads, controllers.Downloader.GetDownloads)
 		g.Post(controllers.PDownloads, controllers.Downloader.StartDownloads)
+		g.Post(controllers.PDownloadDel, controllers.Downloader.Delete)
 	}
 
 	//api

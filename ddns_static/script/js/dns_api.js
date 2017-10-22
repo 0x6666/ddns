@@ -54,6 +54,10 @@
 		basic_func("GET", "/downloads", undefined, suCallback, failCallback);
 	};
 
+	var delete_download = function(data, suCallback, failCallback){
+		basic_func("POST", "/download/del", data, suCallback, failCallback);
+	};
+
 	exports.ddns_get_recodes = get_recodes;
 	exports.ddns_new_domain = new_domain;
 	exports.ddns_delete_domain = delete_domain;
@@ -67,5 +71,6 @@
 	//download api
 	exports.d_download_url = download_url;
 	exports.d_get_downloads = get_downloads;
+	exports.d_delete_download = delete_download; 
 
 })((typeof (exports) === "object" ? exports : window), jQuery);

@@ -5,8 +5,8 @@ import (
 )
 
 type Task struct {
-	Size                  uint64
-	BytesTransferred      uint64
+	Size                  int64
+	BytesTransferred      int64
 	AverageBytesPerSecond uint64
 	Src                   string
 	Dest                  string
@@ -44,10 +44,22 @@ func (d *DownloadMgr) Download(url string) (int, error) {
 	return c.id, err
 }
 
+func (d *DownloadMgr) Stop(id int) error {
+	for _, a := range d.dcs {
+		if a.id == id {
+			a.Stop()
+		}
+	}
+	return nil
+}
+
 func (d *DownloadMgr) Tasks() []*Task {
 	tasks := []*Task{}
 
 	for _, t := range d.dcs {
+		if t.id == -1 {
+			continue
+		}
 		task := Task{}
 		task.Size = t.Size()
 		task.BytesTransferred = t.BytesTransferred()

@@ -28,7 +28,8 @@ const (
 
 	PUpdate = "/update"
 
-	PDownloads = "/downloads"
+	PDownloads   = "/downloads"
+	PDownloadDel = "/download/del"
 
 	PRRecodes    = "/api/recodes"
 	PDataversion = "/api/dataversion"

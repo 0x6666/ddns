@@ -101,7 +101,6 @@
 				}
 			};
 
-
 		function formatDynamic(value, row, index) {
 			return '<input class="dynamic" type="checkbox"' + (value === true ? 'checked="checked"' : '') + '"/>';
 		}
@@ -406,7 +405,22 @@
 	function on_init_downloads_view() {
 		var $table = $('#dtable'),
 			$dbtn = $('#dbtn'),
-			$DInput = $("#d-input");
+			$DInput = $("#d-input"),
+			operateEvents = {
+				'click .remove': function (e, value, row, idx) {
+					d_delete_download({ id: row.id, dest: row.dest },
+						function (rspData) {
+							if (rspData.code === "ok") {
+								alert("ok");
+							} else {
+								var msg = rspData.code;
+								if (rspData.msg && rspData.msg.length)
+									msg += ("   " + rspData.msg);
+								alert(msg);
+							}
+					});
+				}
+			};
 
 		(function () {
 			$table.bootstrapTable({
@@ -443,7 +457,7 @@
 							field: 'operate',
 							title: 'Operate',
 							align: 'center',
-							//events: operateEvents,
+							events: operateEvents,
 							formatter: operateFormatter
 						}
 					]
@@ -496,7 +510,7 @@
 			}
 			function operateFormatter(value, row, index) {
 				return [
-					'<a class="download" href="' + row.dest + '" target=_blank title="Like">',
+					'<a class="download" href="' + row.dest + '" target=_blank title="Download">',
 					'<i class="glyphicon glyphicon-download-alt"></i>',
 					'</a>',
 					'<a class="remove" href="javascript:void(0)" title="Remove">',

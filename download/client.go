@@ -1,6 +1,7 @@
 package download
 
 import (
+	"fmt"
 	"net/http"
 	"time"
 
@@ -33,19 +34,15 @@ type DownloadClent struct {
 // Response.Error field as soon as the Response.IsComplete method returns true.
 //
 // GetAsync is a wrapper for DefaultClient.DoAsync.
-func (d *DownloadClent) GetAsync(dst, src string) (<-chan *grab.Response, error) {
+func (d *DownloadClent) GetAsync(dst, src string) (*grab.Response, error) {
 	// init client and request
-	req, err := grab.NewRequest(src)
+	req, err := grab.NewRequest(dst, src)
 	if err != nil {
 		return nil, err
 	}
 
-	req.Filename = dst
-	//req.Tag = ""
-	req.CreateMissing = true
-
 	// execute async with default client
-	return d.c.DoAsync(req), nil
+	return d.c.Do(req), nil
 }
 
 func (d *DownloadClent) newClient() *grab.Client {
@@ -68,7 +65,7 @@ func (d *DownloadClent) start(url string) error {
 	d.Src = url
 	d.c = d.newClient()
 
-	respch, err := d.GetAsync(config.Data.Download.Dest, url)
+	resp, err := d.GetAsync(config.Data.Download.Dest, url)
 	if err != nil {
 		log.Error("Error downloading %s: %v", url, err)
 		return err
@@ -76,7 +73,7 @@ func (d *DownloadClent) start(url string) error {
 
 	log.Info("Initializing download...")
 
-	d.resp = <-respch
+	d.resp = resp
 	d.isRunning = true
 
 	ticker := time.NewTicker(200 * time.Millisecond)
@@ -85,32 +82,33 @@ func (d *DownloadClent) start(url string) error {
 		for {
 			select {
 			case <-ticker.C:
-				if !d.resp.IsComplete() {
-					log.DebugLine("Progress %d / %d bytes (%d%%)", d.resp.BytesTransferred(), d.resp.Size, int(100*d.resp.Progress()))
-				} else if d.resp.Error != nil {
-					log.Error("Error downloading %s: %v", url, d.resp.Error)
-					d.Error = d.resp.Error
-					break downloadWhile
-				}
+				fmt.Printf("  transferred %v / %v bytes (%.2f%%)\n",
+					resp.BytesComplete(),
+					resp.Size,
+					100*resp.Progress())
+			case <-resp.Done:
+				// download is complete
+				break downloadWhile
 			}
 		}
 	}()
 
-	return d.resp.Error
+	return nil
 }
 
 func (d *DownloadClent) Stop() {
 	if d.c != nil {
-		d.c.CancelRequest(d.resp.Request)
+		d.resp.Cancel()
+		d.id = -1
 	}
 }
 
-func (d *DownloadClent) Size() uint64 {
+func (d *DownloadClent) Size() int64 {
 	return d.resp.Size
 }
 
-func (d *DownloadClent) BytesTransferred() uint64 {
-	return d.resp.BytesTransferred()
+func (d *DownloadClent) BytesTransferred() int64 {
+	return d.resp.BytesComplete()
 }
 
 func (d *DownloadClent) FileName() string {
@@ -122,5 +120,5 @@ func (d *DownloadClent) IsRunning() bool {
 }
 
 func (d *DownloadClent) AverageBytesPerSecond() uint64 {
-	return uint64(d.resp.AverageBytesPerSecond())
+	return uint64(d.resp.BytesPerSecond())
 }

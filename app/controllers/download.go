@@ -4,6 +4,7 @@ import (
 	"net/http"
 	"os"
 	"path/filepath"
+	"strconv"
 	"strings"
 
 	"github.com/0x6666/backup/log"
@@ -141,4 +142,53 @@ func (d Downloader) StartDownloads() {
 	}
 
 	d.JSON(http.StatusOK, JsonMap{"code": CodeOK, "id": id})
+}
+
+// Delete -> [POST] :/downloads
+//
+// Ret Code:[200]
+//
+// [request=json] 开始一个下载任务
+//
+// 成功返回值
+//	{
+//		"code": "OK",
+//		"id":	id
+//	}
+//
+// 失败返回值
+//		code: xxx
+//
+func (d Downloader) Delete() {
+	id := d.C.PostForm("id")
+	dest := d.C.PostForm("dest")
+	if id == "" && dest == "" {
+		log.Error("id and dest is empty")
+		d.JSON(http.StatusOK, JsonMap{"code": CodeInvalidParam, "msg": "dest and id is empty"})
+		return
+	}
+
+	nId, _ := strconv.Atoi(id)
+	tasks := d.d().Tasks()
+	if nId != 0 && len(tasks) != 0 {
+		for _, t := range tasks {
+			if t.Id == nId {
+				d.d().Stop(nId)
+			}
+		}
+	}
+
+	if len(dest) != 0 {
+		filepath.Walk(config.Data.Download.Dest,
+			func(path string, f os.FileInfo, err error) error {
+
+				dst := strings.Replace(path, config.Data.Download.Dest, PFiles, 1)
+				if dst == dest {
+					os.Remove(path)
+				}
+
+				return nil
+			})
+	}
+	d.JSON(http.StatusOK, JsonMap{"code": CodeOK})
 }

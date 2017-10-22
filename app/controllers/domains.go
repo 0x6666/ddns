@@ -9,11 +9,11 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/google/uuid"
 	"github.com/0x6666/backup/log"
 	"github.com/0x6666/ddns/app/model"
 	"github.com/0x6666/ddns/app/sessions"
 	"github.com/0x6666/ddns/errs"
+	"github.com/google/uuid"
 )
 
 type DomainsCtrl struct {
