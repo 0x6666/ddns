@@ -487,7 +487,7 @@
 					d_delete_download({ id: row.id, dest: row.dest },
 						function (rspData) {
 							if (rspData.code === "ok") {
-								alert("ok");
+								$table.bootstrapTable('refresh');
 							} else {
 								var msg = rspData.code;
 								if (rspData.msg && rspData.msg.length)
@@ -497,7 +497,7 @@
 					});
 				}
 			};
-
+			
 		(function () {
 			$table.bootstrapTable({
 				height: getTableHeight(),
