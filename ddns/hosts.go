@@ -18,15 +18,16 @@ type Hosts struct {
 	fileHosts *FileHosts
 
 	hostWatcher *fsnotify.Watcher
+	c1          chan bool
 }
 
 func NewHosts() Hosts {
 	fileHosts := &FileHosts{
-		file:  "/etc/hosts",
-		hosts: make(map[string]string),
+		file:  "./hosts",
+		hosts: make(map[string][]string),
 	}
 
-	hosts := Hosts{fileHosts, nil}
+	hosts := Hosts{fileHosts, nil, make(chan bool, 1)}
 	hosts.refresh()
 	return hosts
 }
@@ -66,6 +67,9 @@ func (h *Hosts) Get(domain string, qtype uint16) ([]net.IP, bool) {
 }
 
 func (h *Hosts) refresh() {
+
+	h.fileHosts.Refresh()
+
 	if h.hostWatcher != nil {
 		return
 	}
@@ -77,6 +81,7 @@ func (h *Hosts) refresh() {
 	}
 
 	go func() {
+	stopWatch:
 		for {
 			select {
 			case event := <-h.hostWatcher.Events:
@@ -88,7 +93,10 @@ func (h *Hosts) refresh() {
 			case err := <-h.hostWatcher.Errors:
 				if err != nil {
 					log.Info("error: %v", err)
+
 				}
+			case <-h.c1:
+				break stopWatch
 			}
 		}
 	}()
@@ -101,7 +109,7 @@ func (h *Hosts) refresh() {
 
 type FileHosts struct {
 	file  string
-	hosts map[string]string
+	hosts map[string][]string
 	mu    sync.RWMutex
 }
 
@@ -113,7 +121,7 @@ func (f *FileHosts) Get(domain string) ([]string, bool) {
 	if !ok {
 		return nil, false
 	}
-	return []string{ip}, true
+	return ip, true
 }
 
 func (f *FileHosts) Refresh() {
@@ -154,13 +162,13 @@ func (f *FileHosts) Refresh() {
 			continue
 		}
 
-		f.hosts[strings.ToLower(domain)] = ip
+		f.hosts[strings.ToLower(domain)] = append(f.hosts[strings.ToLower(domain)], ip)
 	}
 	log.Debug("update hosts records from %s", f.file)
 }
 
 func (f *FileHosts) clear() {
-	f.hosts = make(map[string]string)
+	f.hosts = make(map[string][]string)
 }
 
 func (f *FileHosts) isDomain(domain string) bool {

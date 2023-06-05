@@ -47,7 +47,7 @@ type Question struct {
 }
 
 func (q *Question) String() string {
-	return q.qname + " " + q.qclass + " " + q.qtype
+	return q.qname + " " + q.qtype
 }
 
 type DDNSHandler struct {
@@ -83,6 +83,7 @@ func NewHandler() *DDNSHandler {
 
 func (h *DDNSHandler) close() {
 	if h.hosts.hostWatcher != nil {
+		h.hosts.c1 <- true
 		h.hosts.hostWatcher.Close()
 	}
 }
@@ -173,8 +174,11 @@ func (h *DDNSHandler) do(netType NetType, w dns.ResponseWriter, req *dns.Msg) {
 	//
 	if IPQuery > 0 {
 		if ips, ok := h.hosts.Get(Q.qname, q.Qtype); ok {
-			rspByIps(ips, 600)
-			log.Debug("%s found in hosts file", Q.String())
+			if q.Qtype == dns.TypeA {
+				ips = append(ips, remote)
+			}
+			rspByIps(ips, 900)
+			log.Debug("%s found in hosts file: %v", Q.String(), ips)
 			return
 		}
 		log.Debug("%s didn't found in hosts file", Q.String())
